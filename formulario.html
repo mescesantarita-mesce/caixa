@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MESCE - Registro de Caixa</title>
+  <link rel="icon" href="https://iili.io/CQEddFI.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css">
+  <script src="config.js"></script>
+</head>
+<body>
+
+  <header class="cabecalho">
+    <div class="cabecalho-inner">
+      <img class="logo" src="https://iili.io/CQEddFI.jpg" alt="Logo MESCE">
+      <div class="titulos">
+        <h1>Ministros Extraordinários da Sagrada Comunhão Eucarística</h1>
+        <p>Registro de Movimentações do Caixa</p>
+      </div>
+      <nav class="cabecalho-nav">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="index.html">Início</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="conteudo">
+    <div class="aviso" id="aviso" role="alert"></div>
+
+    <div class="cartao">
+      <h2 class="cartao-titulo">Nova Movimentação</h2>
+      <form id="formulario" autocomplete="off" novalidate>
+        <div class="grade-form">
+
+          <div class="campo">
+            <label for="data">Data</label>
+            <input type="date" id="data" required>
+          </div>
+
+          <div class="campo">
+            <label for="mesce">Mesce (nome do ministro)</label>
+            <div class="campo-conta">
+              <input type="text" id="mesce" list="sugestoes-mesce" placeholder="Nome do ministro" required>
+              <button type="button" class="botao botao-secundario botao-nova-conta" id="botao-ministros" title="Cadastrar ou excluir ministros">+</button>
+            </div>
+            <datalist id="sugestoes-mesce"></datalist>
+            <p class="dica" id="dica-ministros"></p>
+          </div>
+
+          <div class="campo">
+            <label for="valor">Valor (R$)</label>
+            <input type="number" id="valor" min="0" step="0.01" placeholder="Ex.: 5,00" required>
+          </div>
+
+          <div class="campo">
+            <label for="periodo">Período (mês da mensalidade)</label>
+            <select id="periodo">
+              <option value="">— Selecione, se aplicável —</option>
+              <option>Janeiro</option>
+              <option>Fevereiro</option>
+              <option>Março</option>
+              <option>Abril</option>
+              <option>Maio</option>
+              <option>Junho</option>
+              <option>Julho</option>
+              <option>Agosto</option>
+              <option>Setembro</option>
+              <option>Outubro</option>
+              <option>Novembro</option>
+              <option>Dezembro</option>
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="conta">Conta</label>
+            <div class="campo-conta">
+              <select id="conta" required>
+                <option value="">Carregando contas...</option>
+              </select>
+              <button type="button" class="botao botao-secundario botao-nova-conta" id="botao-nova-conta" title="Cadastrar nova conta">+</button>
+            </div>
+            <p class="dica" id="dica-contas">Buscando contas na planilha...</p>
+          </div>
+
+          <div class="campo">
+            <label>Tipo</label>
+            <div class="campo-tipo">
+              <label class="opcao-tipo selecionada-entrada">
+                <input type="radio" name="tipo" value="Entrada" checked>
+                Entrada
+              </label>
+              <label class="opcao-tipo">
+                <input type="radio" name="tipo" value="Saída">
+                Saída
+              </label>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="botoes-form">
+          <button type="submit" class="botao botao-primario" id="botao-salvar">
+            Salvar Movimentação
+          </button>
+          <button type="button" class="botao botao-secundario" id="botao-mensalidade" title="Preenche os campos com os dados de uma mensalidade do mês atual">
+            Registrar Mensalidade
+          </button>
+          <button type="button" class="botao botao-secundario" id="botao-recorrente" title="Pagar várias mensalidades de uma vez em lançamentos separados">
+            Pagamento Recorrente
+          </button>
+          <a class="botao botao-secundario" href="dashboard.html">Ver Dashboard</a>
+        </div>
+        <p class="dica" id="dica-mensalidade-valor"></p>
+
+        <p class="dica" id="dica-sugestoes">Carregando sugestões de nomes e contas...</p>
+      </form>
+    </div>
+
+    <div class="modal-overlay" id="modal-conta" hidden>
+      <div class="modal">
+        <h3>Cadastrar Nova Conta</h3>
+        <div class="campo">
+          <label for="nova-conta-nome">Nome da conta</label>
+          <input type="text" id="nova-conta-nome" placeholder="Ex.: Doação, Rifa, Compra de material..." autocomplete="off">
+        </div>
+        <div class="campo">
+          <label>Tipo da conta</label>
+          <div class="campo-tipo">
+            <label class="opcao-tipo selecionada-entrada">
+              <input type="radio" name="nova-conta-tipo" value="Entrada" checked>
+              Entrada
+            </label>
+            <label class="opcao-tipo">
+              <input type="radio" name="nova-conta-tipo" value="Saída">
+              Saída
+            </label>
+          </div>
+        </div>
+        <div class="botoes-form">
+          <button type="button" class="botao botao-primario" id="salvar-conta">Salvar Conta</button>
+          <button type="button" class="botao botao-secundario" id="cancelar-conta">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-ministros" hidden>
+      <div class="modal modal-largo">
+        <h3>Ministros</h3>
+        <div class="aviso" id="msg-ministros" role="alert"></div>
+        <div class="campo">
+          <label for="novo-ministro-nome">Nome do novo ministro</label>
+          <div class="campo-conta">
+            <input type="text" id="novo-ministro-nome" placeholder="Nome completo" autocomplete="off">
+            <button type="button" class="botao botao-primario botao-nova-conta" id="salvar-ministro">Cadastrar</button>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="novo-ministro-contato">WhatsApp (opcional)</label>
+          <input type="tel" id="novo-ministro-contato" placeholder="Ex.: (11) 99999-9999" autocomplete="off">
+          <p class="dica">Usado no dashboard para lembrar a mensalidade pelo WhatsApp.</p>
+        </div>
+        <div class="campo">
+          <label>Ministros cadastrados</label>
+          <div class="lista-ministros" id="lista-ministros"></div>
+        </div>
+        <div class="botoes-form">
+          <button type="button" class="botao botao-secundario" id="fechar-ministros">Fechar</button>
+        </div>
+      </div>
+    </div>
+  <div class="modal-overlay" id="modal-recorrente" hidden>
+      <div class="modal modal-largo">
+        <h3>Pagamento Recorrente</h3>
+        <div class="aviso" id="msg-recorrente" role="alert"></div>
+        <div class="campo">
+          <label for="rec-mesce">Mesce (nome do ministro)</label>
+          <input type="text" id="rec-mesce" list="sugestoes-mesce" placeholder="Nome do ministro" autocomplete="off">
+        </div>
+        <div class="campo">
+          <label for="rec-inicio">A partir de (mês)</label>
+          <select id="rec-inicio"></select>
+        </div>
+        <div class="campo">
+          <label for="rec-quantidade">Quantidade de meses</label>
+          <input type="number" id="rec-quantidade" min="1" max="12" step="1" value="1">
+        </div>
+        <div class="campo">
+          <label for="rec-total">Valor total pago (R$)</label>
+          <input type="number" id="rec-total" min="0" step="0.01">
+          <p class="dica">Divide automaticamente entre os meses escolhidos.</p>
+        </div>
+        <div class="campo">
+          <label for="rec-valor-mensalidade">Valor da mensalidade (R$)</label>
+          <div class="campo-conta">
+            <input type="number" id="rec-valor-mensalidade" min="0" step="0.01">
+            <button type="button" class="botao botao-primario botao-nova-conta" id="salvar-valor-mensalidade" title="Salvar este valor como o padrão da mensalidade">Salvar valor</button>
+          </div>
+          <p class="dica">Ao mudar a mensalidade, atualize aqui e clique em "Salvar valor".</p>
+        </div>
+        <div class="recorrente-preview" id="rec-preview"></div>
+        <div class="botoes-form">
+          <button type="button" class="botao botao-primario" id="salvar-recorrente">Salvar mensalidades</button>
+          <button type="button" class="botao botao-secundario" id="cancelar-recorrente">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+  <div class="modal-overlay" id="modal-recibo" hidden>
+      <div class="modal">
+        <h3>Pagamento registrado!</h3>
+        <p class="dica" style="margin-top:0">O registro foi salvo na planilha. Deseja imprimir o recibo?</p>
+        <div class="recibo-resumo">
+          <div class="recibo-linha"><span>Data</span><strong id="rec-resumo-data"></strong></div>
+          <div class="recibo-linha"><span>Recebido de</span><strong id="rec-resumo-nome"></strong></div>
+          <div class="recibo-linha"><span>Conta</span><strong id="rec-resumo-conta"></strong></div>
+          <div class="recibo-linha"><span>Período</span><strong id="rec-resumo-periodo"></strong></div>
+          <div class="recibo-linha"><span>Valor</span><strong id="rec-resumo-valor"></strong></div>
+        </div>
+        <div class="botoes-form">
+          <button type="button" class="botao botao-primario" id="imprimir-recibo">Imprimir recibo</button>
+          <button type="button" class="botao botao-secundario" id="fechar-recibo">Fechar</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-overlay" id="modal-recibo-recorrente" hidden>
+      <div class="modal">
+        <h3>Pagamento recorrente registrado!</h3>
+        <p class="dica" style="margin-top:0">Os lançamentos foram salvos na planilha. Deseja imprimir o recibo?</p>
+        <div class="recibo-resumo">
+          <div class="recibo-linha"><span>Data</span><strong id="rec-rec-data"></strong></div>
+          <div class="recibo-linha"><span>Recebido de</span><strong id="rec-rec-nome"></strong></div>
+          <div class="recibo-linha"><span>Conta</span><strong id="rec-rec-conta"></strong></div>
+          <div class="recibo-linha"><span>Meses</span><strong id="rec-rec-meses"></strong></div>
+          <div class="recibo-linha"><span>Valor por mês</span><strong id="rec-rec-valor-mes"></strong></div>
+          <div class="recibo-linha"><span>Total</span><strong id="rec-rec-total"></strong></div>
+        </div>
+        <div class="botoes-form">
+          <button type="button" class="botao botao-primario" id="imprimir-recibo-recorrente">Imprimir recibo</button>
+          <button type="button" class="botao botao-secundario" id="fechar-recibo-recorrente">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="recibo-impressao" id="recibo-impressao">
+    <div class="recibo-folha">
+      <div class="recibo-cabecalho">
+        <img class="logo" src="https://iili.io/CQEddFI.jpg" alt="Logo MESCE">
+        <div>
+          <h2>Ministros Extraordinários da Sagrada Comunhão Eucarística</h2>
+          <p>MESCE</p>
+        </div>
+      </div>
+      <h3 class="recibo-titulo">RECIBO DE PAGAMENTO</h3>
+      <table class="recibo-tabela">
+        <tr><th>Data</th><td id="rec-data"></td></tr>
+        <tr><th>Recebido de</th><td id="rec-nome"></td></tr>
+        <tr><th>Conta</th><td id="rec-conta"></td></tr>
+        <tr id="rec-linha-periodo"><th>Período</th><td id="rec-periodo"></td></tr>
+        <tr id="rec-linha-meses" hidden><th>Meses</th><td id="rec-meses"></td></tr>
+        <tr id="rec-linha-valor-mes" hidden><th>Valor por mês</th><td id="rec-valor-mes"></td></tr>
+        <tr><th>Valor</th><td id="rec-valor"></td></tr>
+      </table>
+      <p class="recibo-extenso">Valor por extenso: <strong id="rec-extenso"></strong></p>
+      <p class="recibo-nota">Declaramos, para os devidos fins, que o valor acima foi recebido em caixa para a manutenção das atividades do MESCE. Agradecemos pela contribuição e pelo carinho com a nossa comunidade.</p>
+      <div class="recibo-assinatura">
+        <div>
+          <p>______________________________</p>
+          <p>Responsável pelo caixa</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="rodape">
+    MESCE &mdash; Ministros Extraordinários da Sagrada Comunhão Eucarística
+  </footer>
+
+  <script>
+    const MESES = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+
+    const aviso = document.getElementById('aviso');
+    const formulario = document.getElementById('formulario');
+    const botaoSalvar = document.getElementById('botao-salvar');
+
+    function hoje() {
+      const d = new Date();
+      const mes = String(d.getMonth() + 1).padStart(2, '0');
+      const dia = String(d.getDate()).padStart(2, '0');
+      return d.getFullYear() + '-' + mes + '-' + dia;
+    }
+
+    document.getElementById('data').value = hoje();
+
+    document.querySelectorAll('.opcao-tipo').forEach(function (opcao) {
+      const radio = opcao.querySelector('input');
+      radio.addEventListener('change', function () {
+        document.querySelectorAll('.opcao-tipo').forEach(function (o) {
+          o.classList.remove('selecionada-entrada', 'selecionada-saida');
+        });
+        if (radio.value === 'Entrada') {
+          opcao.classList.add('selecionada-entrada');
+        } else {
+          opcao.classList.add('selecionada-saida');
+        }
+      });
+    });
+
+    function mostrarAviso(tipo, mensagem) {
+      aviso.className = 'aviso aviso-' + tipo;
+      aviso.textContent = mensagem;
+      aviso.style.display = 'block';
+      aviso.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function esconderAviso() {
+      aviso.style.display = 'none';
+    }
+
+    function formatarValorBRL(n) {
+      return 'R$ ' + n.toFixed(2).replace('.', ',');
+    }
+
+    function valorParaNumero(texto) {
+      let s = String(texto).trim().replace(/[R$\s.]/g, '').replace(',', '.');
+      return parseFloat(s);
+    }
+
+    function dataParaPlanilha(valor) {
+      if (!valor) return '';
+      const partes = valor.split('-');
+      return partes[2] + '/' + partes[1] + '/' + partes[0];
+    }
+
+    // Nomes de ministros para o campo Mesce (preferência: aba "ministros").
+    let nomesSugestao = [];
+    let ministrosLista = [];
+    let ministrosOk = true;
+
+    // Carrega sugestões de nomes (ministros) a partir do CSV publicado.
+    function carregarSugestoes() {
+      const dica = document.getElementById('dica-sugestoes');
+      fetch(CONFIG.CSV_URL)
+        .then(function (r) { return r.text(); })
+        .then(function (texto) {
+          const linhas = parseCSV(texto);
+          nomesSugestao = [];
+          if (linhas.length > 1) {
+            const nomes = new Set();
+            for (let i = 1; i < linhas.length; i++) {
+              if (linhas[i][1]) nomes.add(linhas[i][1].trim());
+            }
+            nomesSugestao = Array.from(nomes);
+          }
+          atualizarDatalistMesce();
+          dica.textContent = nomesSugestao.length
+            ? 'Sugestões carregadas: ' + nomesSugestao.length + ' ministros.'
+            : 'Sem sugestões disponíveis no momento.';
+        })
+        .catch(function () {
+          dica.textContent = 'Não foi possível carregar sugestões (sem internet ou CSV indisponível). Você ainda pode digitar os nomes manualmente.';
+        });
+    }
+
+    function atualizarDatalistMesce() {
+      const nomes = ministrosLista.length ? ministrosLista : nomesSugestao;
+      document.getElementById('sugestoes-mesce').innerHTML =
+        Array.from(new Set(nomes.map(function (n) {
+          return typeof n === 'string' ? n : n.nome;
+        }))).map(function (n) { return '<option value="' + escaparHTML(n) + '">'; }).join('');
+    }
+
+    // Carrega a lista de ministros da aba "ministros" da planilha.
+    function carregarMinistros() {
+      const dica = document.getElementById('dica-ministros');
+      ministrosLista = [];
+      ministrosOk = true;
+      if (!CONFIG.APPS_SCRIPT_URL) {
+        ministrosOk = false;
+        dica.textContent = 'Configure o Apps Script (INSTRUCOES.txt) para gerenciar os ministros na planilha.';
+        return;
+      }
+      fetch(CONFIG.APPS_SCRIPT_URL + '?aba=ministros', { method: 'GET' })
+        .then(function (r) { return r.json(); })
+        .then(function (json) {
+          if (!Array.isArray(json)) throw new Error('Resposta inesperada.');
+          const pareceMapa = json.some(function (o) {
+            return o && Object.prototype.hasOwnProperty.call(o, 'Data');
+          });
+          if (pareceMapa) throw new Error('backend-antigo');
+          ministrosLista = json.map(function (o) {
+            const chaves = Object.keys(o);
+            const nome = o.nome != null ? o.nome : o[chaves[0]];
+            return {
+              nome: String(nome || '').trim(),
+              contato: String(o.contato != null ? o.contato : o[chaves[1]] || '').trim()
+            };
+          }).filter(function (m) {
+            if (!m.nome) return false;
+            return ['nome', 'ministro', 'ministros', 'mesce'].indexOf(m.nome.toLowerCase()) === -1;
+          });
+          ministrosOk = true;
+          atualizarDatalistMesce();
+          dica.textContent = ministrosLista.length
+            ? ministrosLista.length + ' ministro(s) na aba "ministros".'
+            : 'Aba "ministros" está vazia. Use o botão + para cadastrar.';
+        })
+        .catch(function () {
+          ministrosOk = false;
+          ministrosLista = [];
+          dica.textContent = 'Aviso: o Apps Script ainda está desatualizado. Atualize o CodigoAppsScript.gs e publique novamente (INSTRUCOES.txt) para gerenciar os ministros.';
+        });
+    }
+
+    // Contas cadastradas na aba "contas": array de {nome, categoria}.
+    let contasCadastradas = [];
+    let backendContasOk = true;
+
+    const CONTAS_PADRAO = [
+      { nome: 'Mensalidade', categoria: 'Entrada' },
+      { nome: 'Cartelas', categoria: 'Entrada' },
+      { nome: 'Retirada', categoria: 'Saída' }
+    ];
+
+    function carregarContas() {
+      const select = document.getElementById('conta');
+      const dica = document.getElementById('dica-contas');
+      backendContasOk = true;
+
+      if (!CONFIG.APPS_SCRIPT_URL) {
+        preencherSelectContas(CONTAS_PADRAO);
+        dica.textContent = 'Contas padrão exibidas. Configure o Apps Script (INSTRUCOES.txt) para carregar e cadastrar contas da planilha.';
+        return;
+      }
+
+      fetch(CONFIG.APPS_SCRIPT_URL + '?aba=contas', { method: 'GET' })
+        .then(function (r) { return r.json(); })
+        .then(function (json) {
+          if (!Array.isArray(json)) throw new Error('Resposta inesperada.');
+
+          // Detecta o Apps Script antigo: ele responde com dados da aba "mapa".
+          const pareceMapa = json.some(function (o) {
+            return o && Object.prototype.hasOwnProperty.call(o, 'Data');
+          });
+          if (pareceMapa) throw new Error('backend-antigo');
+
+          const lista = json.map(function (o) {
+            const chaves = Object.keys(o);
+            const nome = o.nome != null ? o.nome : o[chaves[0]];
+            const cat = o.categoria != null ? o.categoria : o[chaves[1]];
+            return { nome: String(nome || '').trim(), categoria: String(cat || '').trim() || 'Entrada' };
+          }).filter(function (c) {
+            if (!c.nome) return false;
+            return ['conta', 'nome', 'tipo', 'categoria'].indexOf(c.nome.toLowerCase()) === -1;
+          });
+
+          if (!lista.length) throw new Error('Nenhuma conta cadastrada.');
+          preencherSelectContas(lista);
+          dica.textContent = lista.length + ' conta(s) carregada(s) da planilha.';
+        })
+        .catch(function (erro) {
+          if (erro && erro.message === 'backend-antigo') {
+            backendContasOk = false;
+            preencherSelectContas(CONTAS_PADRAO);
+            document.getElementById('botao-nova-conta').disabled = true;
+            dica.textContent = 'Aviso: o Apps Script ainda está desatualizado. Atualize o CodigoAppsScript.gs e publique novamente (INSTRUCOES.txt) para listar e cadastrar as contas da aba "contas".';
+          } else {
+            preencherSelectContas(CONTAS_PADRAO);
+            dica.textContent = 'Não foi possível ler a aba "contas". Contas padrão exibidas.';
+          }
+        });
+    }
+
+    function preencherSelectContas(lista) {
+      contasCadastradas = lista;
+      const select = document.getElementById('conta');
+      select.innerHTML = '<option value="">— Selecione a conta —</option>' +
+        lista.map(function (c) {
+          return '<option value="' + escaparHTML(c.nome) + '">' + escaparHTML(c.nome) + ' (' + c.categoria + ')</option>';
+        }).join('');
+      aplicarTipoDaConta();
+    }
+
+    // Ao escolher a conta, marca automaticamente o tipo (Entrada/Saída).
+    function aplicarTipoDaConta() {
+      const nome = document.getElementById('conta').value;
+      const conta = contasCadastradas.find(function (c) { return c.nome === nome; });
+      document.querySelectorAll('.opcao-tipo').forEach(function (o) {
+        o.classList.remove('selecionada-entrada', 'selecionada-saida');
+      });
+      if (conta) {
+        const radio = document.querySelector('input[name="tipo"][value="' + conta.categoria + '"]');
+        if (radio) {
+          radio.checked = true;
+          radio.closest('.opcao-tipo').classList.add(conta.categoria === 'Entrada' ? 'selecionada-entrada' : 'selecionada-saida');
+        }
+      }
+    }
+
+    document.getElementById('conta').addEventListener('change', aplicarTipoDaConta);
+
+    function escaparHTML(s) {
+      return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function parseCSV(texto) {
+      const resultado = [];
+      let linha = [], campo = '', dentro = false;
+      for (let i = 0; i < texto.length; i++) {
+        const c = texto[i];
+        if (c === '"') {
+          if (dentro && texto[i + 1] === '"') { campo += '"'; i++; }
+          else dentro = !dentro;
+        } else if (c === ',' && !dentro) {
+          linha.push(campo); campo = '';
+        } else if ((c === '\n' || c === '\r') && !dentro) {
+          if (c === '\r' && texto[i + 1] === '\n') i++;
+          linha.push(campo); resultado.push(linha);
+          linha = []; campo = '';
+        } else {
+          campo += c;
+        }
+      }
+      if (campo.length > 0 || linha.length > 0) { linha.push(campo); resultado.push(linha); }
+      return resultado.filter(function (l) { return l.some(function (c) { return c.trim() !== ''; }); });
+    }
+
+    formulario.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      if (!CONFIG.APPS_SCRIPT_URL) {
+        mostrarAviso('erro', 'A conexão ainda não foi configurada. Abra o arquivo INSTRUCOES.txt e siga o passo a passo para publicar o Apps Script e preencher APPS_SCRIPT_URL no config.js.');
+        return;
+      }
+
+      const nome = document.getElementById('mesce').value.trim();
+      const conta = document.getElementById('conta').value.trim();
+      const valorNum = valorParaNumero(document.getElementById('valor').value);
+      const tipo = document.querySelector('input[name="tipo"]:checked').value;
+
+      if (!nome) { mostrarAviso('erro', 'Informe o nome do ministro (Mesce).'); return; }
+      if (!conta) { mostrarAviso('erro', 'Informe a conta.'); return; }
+      if (isNaN(valorNum) || valorNum < 0) { mostrarAviso('erro', 'Informe um valor válido.'); return; }
+
+      const payload = {
+        data: dataParaPlanilha(document.getElementById('data').value),
+        mesce: nome,
+        valor: valorNum,
+        periodo: document.getElementById('periodo').value,
+        conta: conta,
+        tipo: tipo
+      };
+
+      botaoSalvar.disabled = true;
+      botaoSalvar.textContent = 'Salvando...';
+      esconderAviso();
+
+      fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (resposta) {
+          if (resposta.status === 'ok') {
+            mostrarAviso('sucesso', resposta.mensagem + ' ('
+              + payload.tipo + ' de ' + formatarValorBRL(valorNum) + ' - ' + nome + ')');
+            formulario.reset();
+            document.getElementById('data').value = hoje();
+            mostrarRecibo(payload, valorNum);
+          } else {
+            mostrarAviso('erro', 'Erro ao salvar: ' + (resposta.mensagem || 'resposta inválida.'));
+          }
+        })
+        .catch(function () {
+          mostrarAviso('erro', 'Não foi possível enviar. Verifique sua conexão e se a URL do Apps Script no config.js está correta.');
+        })
+        .finally(function () {
+          botaoSalvar.disabled = false;
+          botaoSalvar.textContent = 'Salvar Movimentação';
+        });
+    });
+
+    carregarSugestoes();
+    carregarContas();
+    carregarMinistros();
+    carregarConfig();
+
+    // ===== Botão atalho "Registrar Mensalidade" =====
+    document.getElementById('botao-mensalidade').addEventListener('click', function () {
+      const mesAtual = MESES[new Date().getMonth()];
+      const selectConta = document.getElementById('conta');
+      const nomesContas = Array.from(selectConta.options).map(function (o) { return o.value; });
+      if (nomesContas.indexOf('Mensalidade') === -1) {
+        mostrarAviso('erro', 'A conta "Mensalidade" não está cadastrada. Cadastre-a primeiro com o botão + ao lado da conta.');
+        return;
+      }
+      selectConta.value = 'Mensalidade';
+      aplicarTipoDaConta();
+      document.getElementById('periodo').value = mesAtual;
+      document.getElementById('valor').value = valorMensalidade;
+      document.getElementById('valor').focus();
+      mostrarAviso('info', 'Mensalidade de ' + mesAtual + ' (R$ ' + formatarValorBRL(valorMensalidade) + ') pré-preenchida. Confira o valor e salve.');
+    });
+
+    // ===== Configuração: valor da mensalidade =====
+    let valorMensalidade = 5;
+
+    function carregarConfig() {
+      const dica = document.getElementById('dica-mensalidade-valor');
+      if (!CONFIG.APPS_SCRIPT_URL) {
+        dica.textContent = 'Valor da mensalidade atual: R$ ' + formatarValorBRL(valorMensalidade) +
+          ' (configure o Apps Script para alterar).';
+        return;
+      }
+      fetch(CONFIG.APPS_SCRIPT_URL + '?aba=config', { method: 'GET' })
+        .then(function (r) { return r.json(); })
+        .then(function (json) {
+          if (json && !isNaN(Number(json.valor_mensalidade)) && Number(json.valor_mensalidade) > 0) {
+            valorMensalidade = Number(json.valor_mensalidade);
+          }
+          dica.textContent = 'Valor da mensalidade atual: R$ ' + formatarValorBRL(valorMensalidade);
+        })
+        .catch(function () {
+          dica.textContent = 'Valor da mensalidade atual: R$ ' + formatarValorBRL(valorMensalidade);
+        });
+    }
+
+    // ===== Pagamento recorrente =====
+    const modalRecorrente = document.getElementById('modal-recorrente');
+    const msgRecorrente = document.getElementById('msg-recorrente');
+
+    function msgModalRecorrente(tipo, mensagem) {
+      msgRecorrente.className = 'aviso aviso-' + tipo;
+      msgRecorrente.textContent = mensagem;
+      msgRecorrente.style.display = 'block';
+    }
+
+    function abrirModalRecorrente() {
+      const nome = document.getElementById('mesce').value.trim();
+      document.getElementById('rec-mesce').value = nome;
+      document.getElementById('rec-inicio').value = MESES[new Date().getMonth()];
+      document.getElementById('rec-quantidade').value = 1;
+      document.getElementById('rec-total').value = valorMensalidade;
+      document.getElementById('rec-valor-mensalidade').value = valorMensalidade;
+      msgRecorrente.style.display = 'none';
+      atualizarPreviewRecorrente();
+      modalRecorrente.hidden = false;
+      if (!nome) document.getElementById('rec-mesce').focus();
+    }
+
+    function mesesRecorrentes() {
+      const inicio = document.getElementById('rec-inicio').value;
+      const quant = parseInt(document.getElementById('rec-quantidade').value, 10) || 0;
+      const inicioIndex = MESES.indexOf(inicio);
+      const meses = [];
+      for (let i = 0; i < Math.min(quant, 12); i++) {
+        const idx = inicioIndex + i;
+        if (idx > 11) break;
+        meses.push(MESES[idx]);
+      }
+      return meses;
+    }
+
+    function atualizarPreviewRecorrente() {
+      const meses = mesesRecorrentes();
+      const total = parseFloat(document.getElementById('rec-total').value) || 0;
+      const porMes = meses.length ? Math.round((total / meses.length) * 100) / 100 : 0;
+      const preview = document.getElementById('rec-preview');
+      if (!meses.length) {
+        preview.innerHTML = '<p class="dica">Escolha o mês de início e a quantidade.</p>';
+        return;
+      }
+      preview.innerHTML =
+        '<p><strong>' + meses.length + ' lançamento(s):</strong> ' + meses.join(', ') + '</p>' +
+        '<p>Valor por mês: <strong>' + formatarValorBRL(porMes) + '</strong> &middot; Total: <strong>' +
+        formatarValorBRL(total) + '</strong></p>';
+    }
+
+    document.getElementById('rec-inicio').addEventListener('change', function () {
+      const quant = parseInt(document.getElementById('rec-quantidade').value, 10) || 1;
+      const inicioIndex = MESES.indexOf(this.value);
+      const max = Math.max(1, 12 - inicioIndex);
+      document.getElementById('rec-quantidade').max = max;
+      if (quant > max) document.getElementById('rec-quantidade').value = max;
+      const novaTotal = (valorMensalidade * (document.getElementById('rec-quantidade').value || 1));
+      document.getElementById('rec-total').value = novaTotal;
+      atualizarPreviewRecorrente();
+    });
+    document.getElementById('rec-quantidade').addEventListener('input', function () {
+      const inicioIndex = MESES.indexOf(document.getElementById('rec-inicio').value);
+      const max = Math.max(1, 12 - inicioIndex);
+      if (this.value > max) this.value = max;
+      document.getElementById('rec-total').value = valorMensalidade * (this.value || 0);
+      atualizarPreviewRecorrente();
+    });
+    document.getElementById('rec-total').addEventListener('input', atualizarPreviewRecorrente);
+
+    document.getElementById('botao-recorrente').addEventListener('click', abrirModalRecorrente);
+    document.getElementById('cancelar-recorrente').addEventListener('click', function () {
+      modalRecorrente.hidden = true;
+    });
+    modalRecorrente.addEventListener('click', function (e) {
+      if (e.target === modalRecorrente) modalRecorrente.hidden = true;
+    });
+
+    const selectInicioRecorrente = document.getElementById('rec-inicio');
+    MESES.forEach(function (mes) {
+      const opcao = document.createElement('option');
+      opcao.value = mes;
+      opcao.textContent = mes;
+      selectInicioRecorrente.appendChild(opcao);
+    });
+
+    document.getElementById('salvar-valor-mensalidade').addEventListener('click', function () {
+      const novoValor = parseFloat(document.getElementById('rec-valor-mensalidade').value);
+      if (isNaN(novoValor) || novoValor <= 0) {
+        msgModalRecorrente('erro', 'Informe um valor de mensalidade válido.');
+        return;
+      }
+      const botao = this;
+      botao.disabled = true;
+      botao.textContent = 'Salvando...';
+      fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ acao: 'salvar_config', chave: 'valor_mensalidade', valor: novoValor })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (resposta) {
+          if (resposta.status === 'ok') {
+            valorMensalidade = novoValor;
+            document.getElementById('dica-mensalidade-valor').textContent =
+              'Valor da mensalidade atual: R$ ' + formatarValorBRL(valorMensalidade);
+            msgModalRecorrente('sucesso', 'Valor da mensalidade atualizado para R$ ' + formatarValorBRL(novoValor) + '.');
+          } else {
+            msgModalRecorrente('erro', 'Erro ao salvar: ' + (resposta.mensagem || 'resposta inválida.'));
+          }
+        })
+        .catch(function () {
+          msgModalRecorrente('erro', 'Não foi possível salvar. Verifique sua conexão.');
+        })
+        .finally(function () {
+          botao.disabled = false;
+          botao.textContent = 'Salvar valor';
+        });
+    });
+
+    document.getElementById('salvar-recorrente').addEventListener('click', function () {
+      const mesce = document.getElementById('rec-mesce').value.trim();
+      const meses = mesesRecorrentes();
+      const total = parseFloat(document.getElementById('rec-total').value);
+      const porMes = meses.length ? Math.round((total / meses.length) * 100) / 100 : 0;
+
+      if (!mesce) { msgModalRecorrente('erro', 'Informe o nome do ministro (Mesce).'); return; }
+      if (!meses.length) { msgModalRecorrente('erro', 'Escolha o mês de início e a quantidade de meses.'); return; }
+      if (isNaN(total) || total <= 0) { msgModalRecorrente('erro', 'Informe o valor total pago.'); return; }
+
+      const botao = this;
+      botao.disabled = true;
+      botao.textContent = 'Salvando...';
+      const dataLancamento = dataParaPlanilha(document.getElementById('data').value);
+      fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          acao: 'pagamento_recorrente',
+          data: dataLancamento,
+          mesce: mesce,
+          meses: meses,
+          valor_unitario: porMes,
+          conta: 'Mensalidade',
+          tipo: 'Entrada'
+        })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (resposta) {
+          if (resposta.status === 'ok') {
+            msgModalRecorrente('sucesso', resposta.mensagem);
+            mostrarAviso('sucesso', resposta.mensagem);
+            modalRecorrente.hidden = true;
+            document.getElementById('mesce').value = '';
+            document.getElementById('valor').value = '';
+            document.getElementById('periodo').value = '';
+            mostrarReciboRecorrente({
+              data: dataLancamento,
+              mesce: mesce,
+              conta: 'Mensalidade',
+              tipo: 'Entrada',
+              meses: meses,
+              porMes: porMes,
+              total: total
+            });
+          } else {
+            msgModalRecorrente('erro', 'Erro ao salvar: ' + (resposta.mensagem || 'resposta inválida.'));
+          }
+        })
+        .catch(function () {
+          msgModalRecorrente('erro', 'Não foi possível salvar. Verifique sua conexão.');
+        })
+        .finally(function () {
+          botao.disabled = false;
+          botao.textContent = 'Salvar mensalidades';
+        });
+    });
+
+    // ===== Recibo de pagamento =====
+    const modalRecibo = document.getElementById('modal-recibo');
+    let ultimoRecibo = null;
+
+    function mostrarRecibo(payload, valorNum) {
+      ultimoRecibo = { payload: payload, valor: valorNum };
+      const dataExib = payload.data;
+      document.getElementById('rec-resumo-data').textContent = dataExib;
+      document.getElementById('rec-resumo-nome').textContent = payload.mesce;
+      document.getElementById('rec-resumo-conta').textContent = payload.conta + (payload.tipo ? ' (' + payload.tipo + ')' : '');
+      document.getElementById('rec-resumo-periodo').textContent = payload.periodo || '—';
+      document.getElementById('rec-resumo-valor').textContent = formatarValorBRL(valorNum);
+      modalRecibo.hidden = false;
+    }
+
+    function preencherReciboImpressao(payload, valorNum) {
+      document.getElementById('rec-data').textContent = payload.data;
+      document.getElementById('rec-nome').textContent = payload.mesce;
+      document.getElementById('rec-conta').textContent = payload.conta + (payload.tipo ? ' (' + payload.tipo + ')' : '');
+      document.getElementById('rec-linha-meses').hidden = true;
+      document.getElementById('rec-linha-valor-mes').hidden = true;
+      document.getElementById('rec-linha-periodo').hidden = false;
+      document.getElementById('rec-periodo').textContent = payload.periodo || '—';
+      document.getElementById('rec-valor').textContent = formatarValorBRL(valorNum);
+      document.getElementById('rec-extenso').textContent = valorPorExtenso(valorNum);
+    }
+
+    document.getElementById('imprimir-recibo').addEventListener('click', function () {
+      if (!ultimoRecibo) return;
+      preencherReciboImpressao(ultimoRecibo.payload, ultimoRecibo.valor);
+      window.print();
+    });
+
+    document.getElementById('fechar-recibo').addEventListener('click', function () {
+      modalRecibo.hidden = true;
+    });
+    modalRecibo.addEventListener('click', function (e) {
+      if (e.target === modalRecibo) modalRecibo.hidden = true;
+    });
+
+    // ===== Recibo do pagamento recorrente =====
+    const modalReciboRecorrente = document.getElementById('modal-recibo-recorrente');
+    let ultimoReciboRecorrente = null;
+
+    function mostrarReciboRecorrente(dados) {
+      ultimoReciboRecorrente = dados;
+      document.getElementById('rec-rec-data').textContent = dados.data;
+      document.getElementById('rec-rec-nome').textContent = dados.mesce;
+      document.getElementById('rec-rec-conta').textContent = dados.conta + ' (' + dados.tipo + ')';
+      document.getElementById('rec-rec-meses').textContent = dados.meses.join(', ');
+      document.getElementById('rec-rec-valor-mes').textContent = formatarValorBRL(dados.porMes);
+      document.getElementById('rec-rec-total').textContent = formatarValorBRL(dados.total);
+      modalReciboRecorrente.hidden = false;
+    }
+
+    function preencherReciboRecorrenteImpressao(dados) {
+      document.getElementById('rec-data').textContent = dados.data;
+      document.getElementById('rec-nome').textContent = dados.mesce;
+      document.getElementById('rec-conta').textContent = dados.conta + ' (' + dados.tipo + ')';
+      document.getElementById('rec-linha-periodo').hidden = true;
+      document.getElementById('rec-linha-meses').hidden = false;
+      document.getElementById('rec-linha-valor-mes').hidden = false;
+      document.getElementById('rec-meses').textContent = dados.meses.join(', ');
+      document.getElementById('rec-valor-mes').textContent = formatarValorBRL(dados.porMes) + ' \u00D7 ' + dados.meses.length;
+      document.getElementById('rec-valor').textContent = formatarValorBRL(dados.total);
+      document.getElementById('rec-extenso').textContent = valorPorExtenso(dados.total);
+    }
+
+    document.getElementById('imprimir-recibo-recorrente').addEventListener('click', function () {
+      if (!ultimoReciboRecorrente) return;
+      preencherReciboRecorrenteImpressao(ultimoReciboRecorrente);
+      window.print();
+    });
+
+    document.getElementById('fechar-recibo-recorrente').addEventListener('click', function () {
+      modalReciboRecorrente.hidden = true;
+    });
+    modalReciboRecorrente.addEventListener('click', function (e) {
+      if (e.target === modalReciboRecorrente) modalReciboRecorrente.hidden = true;
+    });
+
+    // Valor em reais por extenso (até milhões).
+    function valorPorExtenso(n) {
+      const unidades = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove',
+        'dez', 'onze', 'doze', 'treze', 'catorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+      const dezenas = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+      const centenas = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+
+      function tresDigitos(num) {
+        const partes = [];
+        const c = Math.floor(num / 100);
+        const r = num % 100;
+        if (c === 1 && r === 0) partes.push('cem');
+        else if (c >= 1) partes.push(centenas[c]);
+        if (r > 0) {
+          if (r < 20) partes.push(unidades[r]);
+          else {
+            partes.push(dezenas[Math.floor(r / 10)]);
+            const u = r % 10;
+            if (u > 0) partes.push(unidades[u]);
+          }
+        }
+        return partes.join(' e ');
+      }
+
+      const valor = Math.round(n * 100);
+      const centavos = valor % 100;
+      const reais = Math.floor(valor / 100);
+      if (reais === 0 && centavos === 0) return 'zero reais';
+
+      const textoReais = (function () {
+        if (reais === 0) return '';
+        const milhoes = Math.floor(reais / 1000000);
+        const milhares = Math.floor((reais % 1000000) / 1000);
+        const resto = reais % 1000;
+        const partes = [];
+        if (milhoes) partes.push(tresDigitos(milhoes) + (milhoes > 1 ? ' milhões' : ' milhão'));
+        if (milhares) partes.push((milhares === 1 ? '' : tresDigitos(milhares) + ' ') + 'mil');
+        if (resto) partes.push(tresDigitos(resto));
+        return partes.join(' e ') + (reais > 1 ? ' reais' : ' real');
+      })();
+
+      const textoCentavos = centavos > 0
+        ? tresDigitos(centavos) + (centavos > 1 ? ' centavos' : ' centavo')
+        : '';
+
+      return [textoReais, textoCentavos].filter(Boolean).join(' e ');
+    }
+
+    // ===== Pop-up de nova conta =====
+    const modal = document.getElementById('modal-conta');
+    const botaoNovaConta = document.getElementById('botao-nova-conta');
+    const salvarConta = document.getElementById('salvar-conta');
+    const cancelarConta = document.getElementById('cancelar-conta');
+
+    function abrirModal() {
+      if (!backendContasOk) {
+        mostrarAviso('erro', 'O cadastro de contas está desativado porque o Apps Script ainda está desatualizado. Atualize o CodigoAppsScript.gs e publique novamente (INSTRUCOES.txt).');
+        return;
+      }
+      document.getElementById('nova-conta-nome').value = '';
+      document.querySelector('input[name="nova-conta-tipo"][value="Entrada"]').checked = true;
+      document.querySelectorAll('.opcao-tipo').forEach(function (o) {
+        o.classList.remove('selecionada-entrada', 'selecionada-saida');
+      });
+      document.querySelector('input[name="nova-conta-tipo"][value="Entrada"]')
+        .closest('.opcao-tipo').classList.add('selecionada-entrada');
+      modal.hidden = false;
+      document.getElementById('nova-conta-nome').focus();
+    }
+
+    function fecharModal() {
+      modal.hidden = true;
+    }
+
+    botaoNovaConta.addEventListener('click', abrirModal);
+    cancelarConta.addEventListener('click', fecharModal);
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) fecharModal();
+    });
+
+    document.querySelectorAll('input[name="nova-conta-tipo"]').forEach(function (radio) {
+      radio.addEventListener('change', function () {
+        document.querySelectorAll('.opcao-tipo').forEach(function (o) {
+          o.classList.remove('selecionada-entrada', 'selecionada-saida');
+        });
+        radio.closest('.opcao-tipo').classList.add(radio.value === 'Entrada' ? 'selecionada-entrada' : 'selecionada-saida');
+      });
+    });
+
+    salvarConta.addEventListener('click', function () {
+      if (!CONFIG.APPS_SCRIPT_URL) {
+        mostrarAviso('erro', 'Configure o Apps Script no config.js (veja INSTRUCOES.txt) para poder cadastrar novas contas na planilha.');
+        return;
+      }
+      if (!backendContasOk) {
+        mostrarAviso('erro', 'O cadastro de contas está desativado porque o Apps Script ainda está desatualizado.');
+        return;
+      }
+      const nomeConta = document.getElementById('nova-conta-nome').value.trim();
+      if (!nomeConta) {
+        mostrarAviso('erro', 'Informe o nome da conta.');
+        return;
+      }
+      const categoria = document.querySelector('input[name="nova-conta-tipo"]:checked').value;
+      const botao = salvarConta;
+      botao.disabled = true;
+      botao.textContent = 'Salvando...';
+
+      fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ acao: 'nova_conta', nome: nomeConta, categoria: categoria })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (resposta) {
+          if (resposta.status === 'ok') {
+            fecharModal();
+            mostrarAviso('sucesso', resposta.mensagem);
+            carregarContas();
+            document.getElementById('conta').value = nomeConta;
+            aplicarTipoDaConta();
+          } else {
+            mostrarAviso('erro', 'Erro ao cadastrar: ' + (resposta.mensagem || 'resposta inválida.'));
+          }
+        })
+        .catch(function () {
+          mostrarAviso('erro', 'Não foi possível cadastrar a conta. Verifique sua conexão e a URL do Apps Script no config.js.');
+        })
+        .finally(function () {
+          botao.disabled = false;
+          botao.textContent = 'Salvar Conta';
+        });
+    });
+// ===== Pop-up de ministros (cadastrar / excluir) =====
+    const modalMinistros = document.getElementById('modal-ministros');
+    const botaoMinistros = document.getElementById('botao-ministros');
+    const msgMinistros = document.getElementById('msg-ministros');
+
+    function msgModalMinistros(tipo, mensagem) {
+      msgMinistros.className = 'aviso aviso-' + tipo;
+      msgMinistros.textContent = mensagem;
+      msgMinistros.style.display = 'block';
+    }
+
+    function renderizarListaMinistros() {
+      const lista = document.getElementById('lista-ministros');
+      if (!ministrosOk) {
+        lista.innerHTML = '<p class="vazio">Não foi possível carregar os ministros. Verifique se o Apps Script foi atualizado.</p>';
+        return;
+      }
+      if (!ministrosLista.length) {
+        lista.innerHTML = '<p class="vazio">Nenhum ministro cadastrado na aba "ministros".</p>';
+        return;
+      }
+      lista.innerHTML = ministrosLista.slice().sort(function (a, b) {
+        return a.nome.localeCompare(b.nome, 'pt-BR');
+      }).map(function (m) {
+        return '<div class="item-ministro">' +
+          '<span>' + escaparHTML(m.nome) +
+          (m.contato ? '<span class="item-contato">WhatsApp: ' + escaparHTML(m.contato) + '</span>' : '') +
+          '</span>' +
+          '<button type="button" class="botao botao-excluir" data-excluir="' + escaparHTML(m.nome) + '">Excluir</button>' +
+          '</div>';
+      }).join('');
+    }
+
+    function abrirModalMinistros() {
+      if (!CONFIG.APPS_SCRIPT_URL) {
+        mostrarAviso('erro', 'Configure o Apps Script no config.js (veja INSTRUCOES.txt) para gerenciar os ministros.');
+        return;
+      }
+      msgMinistros.style.display = 'none';
+      document.getElementById('novo-ministro-nome').value = '';
+      renderizarListaMinistros();
+      modalMinistros.hidden = false;
+      document.getElementById('novo-ministro-nome').focus();
+    }
+
+    function fecharModalMinistros() {
+      modalMinistros.hidden = true;
+    }
+
+    botaoMinistros.addEventListener('click', abrirModalMinistros);
+    document.getElementById('fechar-ministros').addEventListener('click', fecharModalMinistros);
+    modalMinistros.addEventListener('click', function (e) {
+      if (e.target === modalMinistros) fecharModalMinistros();
+    });
+
+    document.getElementById('novo-ministro-nome').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('salvar-ministro').click();
+      }
+    });
+
+    document.getElementById('salvar-ministro').addEventListener('click', function () {
+      const nomeMinistro = document.getElementById('novo-ministro-nome').value.trim();
+      const contatoMinistro = document.getElementById('novo-ministro-contato').value.trim();
+      if (!nomeMinistro) {
+        msgModalMinistros('erro', 'Informe o nome do ministro.');
+        return;
+      }
+      const botao = this;
+      botao.disabled = true;
+      botao.textContent = 'Cadastrando...';
+      fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ acao: 'nova_ministro', nome: nomeMinistro, contato: contatoMinistro })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (resposta) {
+          if (resposta.status === 'ok') {
+            document.getElementById('novo-ministro-nome').value = '';
+            document.getElementById('novo-ministro-contato').value = '';
+            msgModalMinistros('sucesso', resposta.mensagem);
+            carregarMinistros();
+            setTimeout(renderizarListaMinistros, 400);
+          } else {
+            msgModalMinistros('erro', 'Erro ao cadastrar: ' + (resposta.mensagem || 'resposta inválida.'));
+          }
+        })
+        .catch(function () {
+          msgModalMinistros('erro', 'Não foi possível cadastrar. Verifique sua conexão e a URL do Apps Script no config.js.');
+        })
+        .finally(function () {
+          botao.disabled = false;
+          botao.textContent = 'Cadastrar';
+        });
+    });
+
+    document.getElementById('lista-ministros').addEventListener('click', function (e) {
+      const botao = e.target.closest('[data-excluir]');
+      if (!botao) return;
+      const nome = botao.getAttribute('data-excluir');
+      if (!confirm('Excluir o ministro "' + nome + '" da aba "ministros"?')) return;
+      botao.disabled = true;
+      fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ acao: 'excluir_ministro', nome: nome })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (resposta) {
+          if (resposta.status === 'ok') {
+            msgModalMinistros('sucesso', resposta.mensagem);
+            carregarMinistros();
+            setTimeout(renderizarListaMinistros, 400);
+          } else {
+            msgModalMinistros('erro', 'Erro ao excluir: ' + (resposta.mensagem || 'resposta inválida.'));
+          }
+        })
+        .catch(function () {
+          msgModalMinistros('erro', 'Não foi possível excluir. Verifique sua conexão.');
+        })
+        .finally(function () {
+          botao.disabled = false;
+        });
+    });
+  </script>
+</body>
+</html>

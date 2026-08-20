@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MESCE - Controle do Caixa</title>
+  <link rel="icon" href="https://iili.io/CQEddFI.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --azul-celeste: #7ec8e3;
+      --azul-claro: #eaf6fc;
+      --azul-medio: #38b6ff;
+      --azul-profundo: #0b5394;
+      --azul-escuro: #083a6b;
+      --texto: #1b2a35;
+      --texto-suave: #5a7486;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      font-family: "Poppins", "Segoe UI", Arial, sans-serif;
+      color: var(--texto);
+      background: linear-gradient(180deg, #eef7fc 0%, #dceef8 55%, #c4e2f3 100%);
+      overflow-x: hidden;
+    }
+
+    /* ===== Marca d'água (logo sem o fundo branco) ===== */
+    .marca-agua {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+
+    .marca-agua img {
+      width: min(680px, 92vw);
+      mix-blend-mode: multiply;
+      filter: saturate(0.85);
+      opacity: 0.16;
+    }
+
+    /* Brilho varrendo a logo em loop */
+    .marca-agua::after {
+      content: "";
+      position: absolute;
+      top: -30%;
+      bottom: -30%;
+      left: 0;
+      width: 55%;
+      background: linear-gradient(115deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.5) 40%,
+        rgba(255, 255, 255, 0.85) 50%,
+        rgba(255, 255, 255, 0.5) 60%,
+        rgba(255, 255, 255, 0) 100%);
+      mix-blend-mode: screen;
+      animation: varrer 4.2s ease-in-out infinite;
+    }
+
+    @keyframes varrer {
+      0%   { transform: translateX(-150%) skewX(-18deg); }
+      55%  { transform: translateX(150%) skewX(-18deg); }
+      100% { transform: translateX(150%) skewX(-18deg); }
+    }
+
+    .tela-inicial {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+      text-align: center;
+    }
+
+    .tela-inicial h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--azul-profundo);
+      letter-spacing: 1px;
+    }
+
+    .tela-inicial .subtitulo {
+      margin-top: 6px;
+      max-width: 560px;
+      font-size: 1.02rem;
+      font-weight: 400;
+      color: var(--texto-suave);
+    }
+
+    .atalhos {
+      margin-top: 40px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .cartao-at {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 240px;
+      padding: 34px 22px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 2px solid var(--azul-celeste);
+      box-shadow: 0 10px 28px rgba(11, 83, 148, 0.12);
+      text-decoration: none;
+      color: var(--azul-profundo);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .cartao-at:hover {
+      transform: translateY(-6px);
+      border-color: var(--azul-profundo);
+      box-shadow: 0 16px 34px rgba(11, 83, 148, 0.22);
+    }
+
+    .cartao-at .icone {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--azul-profundo), var(--azul-medio));
+      box-shadow: 0 8px 18px rgba(11, 83, 148, 0.35);
+    }
+
+    .cartao-at .icone svg {
+      width: 34px;
+      height: 34px;
+    }
+
+    .cartao-at .rotulo {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .cartao-at .descricao {
+      font-size: 0.85rem;
+      color: var(--texto-suave);
+    }
+
+    .rodape-inicial {
+      margin-top: 44px;
+      font-size: 0.85rem;
+      color: var(--texto-suave);
+    }
+
+    @media (max-width: 560px) {
+      .atalhos {
+        gap: 16px;
+      }
+      .cartao-at {
+        width: min(300px, 90vw);
+        padding: 26px 18px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .marca-agua::after {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="marca-agua" aria-hidden="true">
+    <img src="https://iili.io/CQEddFI.jpg" alt="">
+  </div>
+
+  <main class="tela-inicial">
+    <h1>MESCE</h1>
+    <p class="subtitulo">Ministros Extraordinários da Sagrada Comunhão Eucarística</p>
+
+    <div class="atalhos">
+      <a class="cartao-at" href="formulario.html">
+        <span class="icone" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 3h6v4H9z"></path>
+            <rect x="5" y="5" width="14" height="16" rx="2"></rect>
+            <path d="M9 13l2 2 4-4"></path>
+          </svg>
+        </span>
+        <span class="rotulo">Formulário</span>
+        <span class="descricao">Registrar movimentações, mensalidades e recibos</span>
+      </a>
+
+      <a class="cartao-at" href="dashboard.html">
+        <span class="icone" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"></path>
+            <path d="M6 21V10"></path>
+            <path d="M12 21V4"></path>
+            <path d="M18 21v-7"></path>
+          </svg>
+        </span>
+        <span class="rotulo">Dashboard</span>
+        <span class="descricao">Saldo, devedores, WhatsApp e relatórios</span>
+      </a>
+    </div>
+
+    <p class="rodape-inicial">Escolha um dos ambientes para continuar</p>
+  </main>
+
+</body>
+</html>
