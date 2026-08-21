@@ -874,6 +874,17 @@ tbody tr:nth-child(even):hover {
   color: var(--texto-suave);
 }
 
+/* ===== Campos lado a lado no modal recorrente ===== */
+.campo-linha {
+  display: flex;
+  gap: 14px;
+}
+
+.campo-linha .campo {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ===== Recibo ===== */
 .recibo-resumo {
   border: 1px solid #d8ecf5;

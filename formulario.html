@@ -181,26 +181,30 @@
           <label for="rec-mesce">Mesce (nome do ministro)</label>
           <input type="text" id="rec-mesce" list="sugestoes-mesce" placeholder="Nome do ministro" autocomplete="off">
         </div>
-        <div class="campo">
-          <label for="rec-inicio">A partir de (mês)</label>
-          <select id="rec-inicio"></select>
-        </div>
-        <div class="campo">
-          <label for="rec-quantidade">Quantidade de meses</label>
-          <input type="number" id="rec-quantidade" min="1" max="12" step="1" value="1">
-        </div>
-        <div class="campo">
-          <label for="rec-total">Valor total pago (R$)</label>
-          <input type="number" id="rec-total" min="0" step="0.01">
-          <p class="dica">Divide automaticamente entre os meses escolhidos.</p>
-        </div>
-        <div class="campo">
-          <label for="rec-valor-mensalidade">Valor da mensalidade (R$)</label>
-          <div class="campo-conta">
-            <input type="number" id="rec-valor-mensalidade" min="0" step="0.01">
-            <button type="button" class="botao botao-primario botao-nova-conta" id="salvar-valor-mensalidade" title="Salvar este valor como o padrão da mensalidade">Salvar valor</button>
+        <div class="campo-linha">
+          <div class="campo">
+            <label for="rec-inicio">A partir de (mês)</label>
+            <select id="rec-inicio"></select>
           </div>
-          <p class="dica">Ao mudar a mensalidade, atualize aqui e clique em "Salvar valor".</p>
+          <div class="campo">
+            <label for="rec-quantidade">Quantidade de meses</label>
+            <input type="number" id="rec-quantidade" min="1" max="12" step="1" value="1">
+          </div>
+        </div>
+        <div class="campo-linha">
+          <div class="campo">
+            <label for="rec-total">Valor total pago (R$)</label>
+            <input type="number" id="rec-total" min="0" step="0.01">
+            <p class="dica">Divide automaticamente entre os meses escolhidos.</p>
+          </div>
+          <div class="campo">
+            <label for="rec-valor-mensalidade">Valor da mensalidade (R$)</label>
+            <div class="campo-conta">
+              <input type="number" id="rec-valor-mensalidade" min="0" step="0.01">
+              <button type="button" class="botao botao-primario botao-nova-conta" id="salvar-valor-mensalidade" title="Salvar este valor como o padrão da mensalidade">Salvar valor</button>
+            </div>
+            <p class="dica">Ao mudar a mensalidade, atualize aqui e clique em "Salvar valor".</p>
+          </div>
         </div>
         <div class="recorrente-preview" id="rec-preview"></div>
         <div class="botoes-form">
