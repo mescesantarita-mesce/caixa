@@ -37,6 +37,31 @@
       overflow-x: hidden;
     }
 
+    /* ===== Efeito "Particles" por trás dos cartões — cores da tela ===== */
+    #particle-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    #particle-bg canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      pointer-events: none;
+      opacity: 0.95;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #particle-bg canvas {
+        opacity: 0.5;
+      }
+    }
+
     /* ===== Marca d'água (logo sem o fundo branco) ===== */
     .marca-agua {
       position: fixed;
@@ -53,30 +78,6 @@
       mix-blend-mode: multiply;
       filter: saturate(0.85);
       opacity: 0.16;
-    }
-
-    /* Brilho varrendo a logo em loop */
-    .marca-agua::after {
-      content: "";
-      position: absolute;
-      top: -30%;
-      bottom: -30%;
-      left: 0;
-      width: 55%;
-      background: linear-gradient(115deg,
-        rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.5) 40%,
-        rgba(255, 255, 255, 0.85) 50%,
-        rgba(255, 255, 255, 0.5) 60%,
-        rgba(255, 255, 255, 0) 100%);
-      mix-blend-mode: screen;
-      animation: varrer 4.2s ease-in-out infinite;
-    }
-
-    @keyframes varrer {
-      0%   { transform: translateX(-150%) skewX(-18deg); }
-      55%  { transform: translateX(150%) skewX(-18deg); }
-      100% { transform: translateX(150%) skewX(-18deg); }
     }
 
     .tela-inicial {
@@ -106,61 +107,186 @@
       color: var(--texto-suave);
     }
 
+    /* ===== Regra de ângulo para a borda rotativa dinâmica ===== */
+    @property --border-angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
     .atalhos {
       margin-top: 40px;
       display: flex;
-      gap: 24px;
+      gap: 28px;
       flex-wrap: wrap;
       justify-content: center;
     }
 
     .cartao-at {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      width: 240px;
-      padding: 34px 22px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.92);
-      border: 2px solid var(--azul-celeste);
-      box-shadow: 0 10px 28px rgba(11, 83, 148, 0.12);
+      gap: 12px;
+      width: 260px;
+      padding: 36px 24px;
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 247, 255, 0.92) 100%);
+      border: 1px solid rgba(126, 200, 227, 0.4);
+      box-shadow: 0 12px 32px -8px rgba(11, 83, 148, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.9);
       text-decoration: none;
       color: var(--azul-profundo);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      overflow: hidden;
+      isolation: isolate;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.4s ease;
+    }
+
+    /* Borda dinâmica rotativa no hover */
+    .cartao-at::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      padding: 2px;
+      background: conic-gradient(
+        from var(--border-angle),
+        transparent 0%,
+        var(--azul-medio) 25%,
+        var(--azul-profundo) 50%,
+        #38b6ff 75%,
+        transparent 100%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      animation: girarBorda 3.5s linear infinite;
+      z-index: 2;
+    }
+
+    @keyframes girarBorda {
+      to {
+        --border-angle: 360deg;
+      }
+    }
+
+    /* Brilho metalizado suave passando ao passar o mouse */
+    .cartao-at::after {
+      content: '';
+      position: absolute;
+      top: -60%;
+      left: -150%;
+      width: 70%;
+      height: 220%;
+      background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(255, 255, 255, 0.15) 35%,
+        rgba(255, 255, 255, 0.75) 50%,
+        rgba(255, 255, 255, 0.15) 65%,
+        transparent 80%
+      );
+      transform: rotate(25deg);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 3;
     }
 
     .cartao-at:hover {
-      transform: translateY(-6px);
-      border-color: var(--azul-profundo);
-      box-shadow: 0 16px 34px rgba(11, 83, 148, 0.22);
+      transform: translateY(-8px) scale(1.02);
+      border-color: transparent;
+      box-shadow: 0 20px 40px -10px rgba(11, 83, 148, 0.24), 0 0 20px rgba(56, 182, 255, 0.2);
+    }
+
+    .cartao-at:hover::before {
+      opacity: 1;
+    }
+
+    .cartao-at:hover::after {
+      opacity: 1;
+      animation: brilhoMetalico 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    @keyframes brilhoMetalico {
+      0% {
+        left: -130%;
+      }
+      100% {
+        left: 180%;
+      }
     }
 
     .cartao-at .icone {
-      width: 68px;
-      height: 68px;
-      border-radius: 50%;
+      position: relative;
+      z-index: 1;
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
       display: grid;
       place-items: center;
       color: #fff;
-      background: linear-gradient(135deg, var(--azul-profundo), var(--azul-medio));
-      box-shadow: 0 8px 18px rgba(11, 83, 148, 0.35);
+      background: linear-gradient(135deg, var(--azul-escuro) 0%, var(--azul-profundo) 45%, var(--azul-medio) 100%);
+      box-shadow: 0 10px 22px rgba(11, 83, 148, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+    }
+
+    .cartao-at:hover .icone {
+      transform: scale(1.08) rotate(-3deg);
+      box-shadow: 0 14px 28px rgba(11, 83, 148, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.6);
     }
 
     .cartao-at .icone svg {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
     }
 
     .cartao-at .rotulo {
-      font-size: 1.25rem;
+      position: relative;
+      z-index: 1;
+      font-size: 1.28rem;
       font-weight: 600;
+      letter-spacing: -0.2px;
+      transition: color 0.3s ease;
+    }
+
+    .cartao-at:hover .rotulo {
+      color: var(--azul-escuro);
     }
 
     .cartao-at .descricao {
-      font-size: 0.85rem;
+      position: relative;
+      z-index: 1;
+      font-size: 0.86rem;
       color: var(--texto-suave);
+      line-height: 1.45;
+    }
+
+    .cartao-at .acao-indicador {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--azul-medio);
+      opacity: 0.85;
+      transition: transform 0.3s ease, opacity 0.3s ease, color 0.3s ease;
+    }
+
+    .cartao-at:hover .acao-indicador {
+      opacity: 1;
+      color: var(--azul-profundo);
+      transform: translateX(4px);
     }
 
     .rodape-inicial {
@@ -178,12 +304,6 @@
         padding: 26px 18px;
       }
     }
-
-    @media (prefers-reduced-motion: reduce) {
-      .marca-agua::after {
-        animation: none;
-      }
-    }
   </style>
 </head>
 <body>
@@ -192,39 +312,269 @@
     <img src="https://iili.io/CQEddFI.jpg" alt="">
   </div>
 
-  <main class="tela-inicial">
-    <h1>MESCE</h1>
-    <p class="subtitulo">Ministros Extraordinários da Sagrada Comunhão Eucarística</p>
+  <div id="particle-bg" aria-hidden="true"></div>
 
-    <div class="atalhos">
-      <a class="cartao-at" href="formulario.html">
+  <main class="tela-inicial" data-od-id="tela-inicial">
+    <h1 data-od-id="titulo-principal">MESCE</h1>
+    <p class="subtitulo" data-od-id="subtitulo">Ministros Extraordinários da Sagrada Comunhão Eucarística</p>
+
+    <div class="atalhos" data-od-id="atalhos-grid">
+      <a class="cartao-at" data-od-id="card-formulario" href="formulario.html">
         <span class="icone" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 3h6v4H9z"></path>
-            <rect x="5" y="5" width="14" height="16" rx="2"></rect>
-            <path d="M9 13l2 2 4-4"></path>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" fill="rgba(255,255,255,0.18)"></rect>
+            <path d="M9 12h6"></path>
+            <path d="M9 16h4"></path>
+            <circle cx="16" cy="16" r="3.5" fill="#38b6ff" stroke="none"></circle>
+            <path d="M14.5 16l1 1 2-2" stroke="#ffffff" stroke-width="1.4"></path>
           </svg>
         </span>
         <span class="rotulo">Formulário</span>
         <span class="descricao">Registrar movimentações, mensalidades e recibos</span>
+        <span class="acao-indicador">
+          Acessar
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="M12 5l7 7-7 7"></path>
+          </svg>
+        </span>
       </a>
 
-      <a class="cartao-at" href="dashboard.html">
+      <a class="cartao-at" data-od-id="card-dashboard" href="dashboard.html">
         <span class="icone" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 21h18"></path>
-            <path d="M6 21V10"></path>
-            <path d="M12 21V4"></path>
-            <path d="M18 21v-7"></path>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="4"></rect>
+            <path d="M7 17v-5"></path>
+            <path d="M11 17V9"></path>
+            <path d="M15 17v-3"></path>
+            <path d="M7 11l3.5-3.5 2.5 2.5 4-4" stroke="#38b6ff" stroke-width="2"></path>
+            <circle cx="17" cy="6" r="2" fill="#38b6ff" stroke="none"></circle>
           </svg>
         </span>
         <span class="rotulo">Dashboard</span>
         <span class="descricao">Saldo, devedores, WhatsApp e relatórios</span>
+        <span class="acao-indicador">
+          Acessar
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="M12 5l7 7-7 7"></path>
+          </svg>
+        </span>
       </a>
     </div>
 
-    <p class="rodape-inicial">Escolha um dos ambientes para continuar</p>
+    <p class="rodape-inicial" data-od-id="rodape-inicial">Escolha um dos ambientes para continuar</p>
   </main>
+
+  <script type="module">
+    import { Renderer, Camera, Geometry, Program, Mesh } from 'https://cdn.jsdelivr.net/npm/ogl@1.0.11/+esm';
+
+    const container = document.getElementById('particle-bg');
+    if (!container) throw new Error('particle-bg não encontrado');
+
+    // Parâmetros — azul mais vivo do projeto (azul-medio/celeste com acento profundo)
+    const particleCount = 200;
+    const particleSpread = 10;
+    const speed = 0.1;
+    const particleColors = ['#38b6ff', '#55c9ff', '#74d4ff', '#0b5394'];
+    const moveParticlesOnHover = true;
+    const particleHoverFactor = 1.6;
+    const alphaParticles = true;
+    const particleBaseSize = 100;
+    const sizeRandomness = 1;
+    const cameraDistance = 20;
+    const disableRotation = false;
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+
+    const hexToRgb = hex => {
+      hex = hex.replace(/^#/, '');
+      if (hex.length === 3) {
+        hex = hex
+          .split('')
+          .map(c => c + c)
+          .join('');
+      }
+      const int = parseInt(hex.slice(0, 6), 16);
+      const r = ((int >> 16) & 255) / 255;
+      const g = ((int >> 8) & 255) / 255;
+      const b = (int & 255) / 255;
+      return [r, g, b];
+    };
+
+    const vertex = `
+      attribute vec3 position;
+      attribute vec4 random;
+      attribute vec3 color;
+
+      uniform mat4 modelMatrix;
+      uniform mat4 viewMatrix;
+      uniform mat4 projectionMatrix;
+      uniform float uTime;
+      uniform float uSpread;
+      uniform float uBaseSize;
+      uniform float uSizeRandomness;
+
+      varying vec4 vRandom;
+      varying vec3 vColor;
+
+      void main() {
+        vRandom = random;
+        vColor = color;
+
+        vec3 pos = position * uSpread;
+        pos.z *= 10.0;
+
+        vec4 mPos = modelMatrix * vec4(pos, 1.0);
+        float t = uTime;
+        mPos.x += sin(t * random.z + 6.28 * random.w) * mix(0.1, 1.5, random.x);
+        mPos.y += sin(t * random.y + 6.28 * random.x) * mix(0.1, 1.5, random.w);
+        mPos.z += sin(t * random.w + 6.28 * random.y) * mix(0.1, 1.5, random.z);
+
+        vec4 mvPos = viewMatrix * mPos;
+
+        if (uSizeRandomness == 0.0) {
+          gl_PointSize = uBaseSize;
+        } else {
+          gl_PointSize = (uBaseSize * (1.0 + uSizeRandomness * (random.x - 0.5))) / length(mvPos.xyz);
+        }
+
+        gl_Position = projectionMatrix * mvPos;
+      }
+    `;
+
+    const fragment = `
+      precision highp float;
+
+      uniform float uTime;
+      uniform float uAlphaParticles;
+      varying vec4 vRandom;
+      varying vec3 vColor;
+
+      void main() {
+        vec2 uv = gl_PointCoord.xy;
+        float d = length(uv - vec2(0.5));
+
+        if (uAlphaParticles < 0.5) {
+          if (d > 0.5) {
+            discard;
+          }
+          gl_FragColor = vec4(vColor + 0.2 * sin(uv.yxx + uTime + vRandom.y * 6.28), 1.0);
+        } else {
+          float circle = smoothstep(0.5, 0.4, d) * 0.8;
+          gl_FragColor = vec4(vColor + 0.2 * sin(uv.yxx + uTime + vRandom.y * 6.28), circle);
+        }
+      }
+    `;
+
+    const renderer = new Renderer({ dpr: pixelRatio, depth: false, alpha: true });
+    const gl = renderer.gl;
+    container.appendChild(gl.canvas);
+    gl.clearColor(0, 0, 0, 0);
+
+    const camera = new Camera(gl, { fov: 15 });
+    camera.position.set(0, 0, cameraDistance);
+
+    function resize() {
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      renderer.setSize(width, height);
+      camera.perspective({ aspect: gl.canvas.width / gl.canvas.height });
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Mouse: a nuvem de partículas acompanha suavemente o cursor
+    const mouse = { x: 0, y: 0 };
+    function onMouseMove(e) {
+      const rect = container.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+    }
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+
+    const count = particleCount;
+    const positions = new Float32Array(count * 3);
+    const randoms = new Float32Array(count * 4);
+    const colorsArr = new Float32Array(count * 3);
+
+    for (let i = 0; i < count; i++) {
+      let x, y, z, len;
+      do {
+        x = Math.random() * 2 - 1;
+        y = Math.random() * 2 - 1;
+        z = Math.random() * 2 - 1;
+        len = x * x + y * y + z * z;
+      } while (len > 1 || len === 0);
+      const r = Math.cbrt(Math.random());
+      positions.set([x * r, y * r, z * r], i * 3);
+      randoms.set([Math.random(), Math.random(), Math.random(), Math.random()], i * 4);
+      const col = hexToRgb(particleColors[Math.floor(Math.random() * particleColors.length)]);
+      colorsArr.set(col, i * 3);
+    }
+
+    const geometry = new Geometry(gl, {
+      position: { size: 3, data: positions },
+      random: { size: 4, data: randoms },
+      color: { size: 3, data: colorsArr }
+    });
+
+    const program = new Program(gl, {
+      vertex,
+      fragment,
+      uniforms: {
+        uTime: { value: 0 },
+        uSpread: { value: particleSpread },
+        uBaseSize: { value: particleBaseSize * pixelRatio },
+        uSizeRandomness: { value: sizeRandomness },
+        uAlphaParticles: { value: alphaParticles ? 1 : 0 }
+      },
+      transparent: true,
+      depthTest: false
+    });
+
+    const particles = new Mesh(gl, { mode: gl.POINTS, geometry, program });
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let lastTime = performance.now();
+    let elapsed = 0;
+
+    function frame(t) {
+      const delta = Math.min(t - lastTime, 50);
+      lastTime = t;
+      elapsed += delta * speed;
+
+      program.uniforms.uTime.value = elapsed * 0.001;
+
+      if (moveParticlesOnHover) {
+        const targetX = -mouse.x * particleHoverFactor;
+        const targetY = -mouse.y * particleHoverFactor;
+        particles.position.x += (targetX - particles.position.x) * 0.08;
+        particles.position.y += (targetY - particles.position.y) * 0.08;
+      } else {
+        particles.position.x = 0;
+        particles.position.y = 0;
+      }
+
+      if (!disableRotation) {
+        particles.rotation.x = Math.sin(elapsed * 0.0002) * 0.1;
+        particles.rotation.y = Math.cos(elapsed * 0.0005) * 0.15;
+        particles.rotation.z += 0.01 * speed;
+      }
+
+      renderer.render({ scene: particles, camera });
+    }
+
+    if (reduceMotion) {
+      frame(performance.now());
+    } else {
+      requestAnimationFrame(function tick(t) {
+        frame(t);
+        requestAnimationFrame(tick);
+      });
+    }
+  </script>
 
 </body>
 </html>

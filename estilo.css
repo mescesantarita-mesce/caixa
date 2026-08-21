@@ -705,6 +705,12 @@ tbody tr:nth-child(even):hover {
   border-bottom: none;
 }
 
+.item-ministro.editando {
+  background: var(--azul-claro);
+  box-shadow: inset 0 0 0 2px var(--azul-profundo);
+  border-radius: 12px;
+}
+
 .botao-excluir {
   background: var(--saida-fundo);
   color: var(--saida);

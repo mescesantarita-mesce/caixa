@@ -151,11 +151,13 @@
         <h3>Ministros</h3>
         <div class="aviso" id="msg-ministros" role="alert"></div>
         <div class="campo">
-          <label for="novo-ministro-nome">Nome do novo ministro</label>
+          <label for="novo-ministro-nome" id="label-ministro">Nome do novo ministro</label>
           <div class="campo-conta">
             <input type="text" id="novo-ministro-nome" placeholder="Nome completo" autocomplete="off">
             <button type="button" class="botao botao-primario botao-nova-conta" id="salvar-ministro">Cadastrar</button>
+            <button type="button" class="botao botao-secundario botao-nova-conta" id="cancelar-edicao-ministro" hidden>Cancelar edição</button>
           </div>
+          <p class="dica" id="dica-edicao-ministro" hidden></p>
         </div>
         <div class="campo">
           <label for="novo-ministro-contato">WhatsApp (opcional)</label>
@@ -1039,6 +1041,36 @@
       msgMinistros.style.display = 'block';
     }
 
+    // Ministro em edição ({ nomeOriginal }). null = modo cadastro.
+    let ministroEditando = null;
+
+    function entrarEdicaoMinistro(m) {
+      ministroEditando = { nomeOriginal: m.nome };
+      document.getElementById('novo-ministro-nome').value = m.nome;
+      document.getElementById('novo-ministro-contato').value = m.contato || '';
+      document.getElementById('label-ministro').textContent = 'Editar ministro';
+      document.getElementById('salvar-ministro').textContent = 'Salvar alterações';
+      document.getElementById('cancelar-edicao-ministro').hidden = false;
+      const dica = document.getElementById('dica-edicao-ministro');
+      dica.textContent = 'Editando: ' + m.nome + '. Clique em "Cancelar edição" para voltar ao cadastro.';
+      dica.hidden = false;
+      renderizarListaMinistros();
+      document.getElementById('novo-ministro-nome').focus();
+    }
+
+    function cancelarEdicaoMinistro() {
+      ministroEditando = null;
+      document.getElementById('novo-ministro-nome').value = '';
+      document.getElementById('novo-ministro-contato').value = '';
+      document.getElementById('label-ministro').textContent = 'Nome do novo ministro';
+      document.getElementById('salvar-ministro').textContent = 'Cadastrar';
+      document.getElementById('cancelar-edicao-ministro').hidden = true;
+      document.getElementById('dica-edicao-ministro').hidden = true;
+      renderizarListaMinistros();
+    }
+
+    document.getElementById('cancelar-edicao-ministro').addEventListener('click', cancelarEdicaoMinistro);
+
     function renderizarListaMinistros() {
       const lista = document.getElementById('lista-ministros');
       if (!ministrosOk) {
@@ -1052,11 +1084,15 @@
       lista.innerHTML = ministrosLista.slice().sort(function (a, b) {
         return a.nome.localeCompare(b.nome, 'pt-BR');
       }).map(function (m) {
-        return '<div class="item-ministro">' +
+        const editando = ministroEditando && ministroEditando.nomeOriginal === m.nome;
+        return '<div class="item-ministro' + (editando ? ' editando' : '') + '">' +
           '<span>' + escaparHTML(m.nome) +
           (m.contato ? '<span class="item-contato">WhatsApp: ' + escaparHTML(m.contato) + '</span>' : '') +
           '</span>' +
-          '<button type="button" class="botao botao-excluir" data-excluir="' + escaparHTML(m.nome) + '">Excluir</button>' +
+          '<span class="acoes-celula">' +
+          '<button type="button" class="botao botao-acao" data-editar="' + escaparHTML(m.nome) + '">Editar</button>' +
+          '<button type="button" class="botao botao-acao botao-acao-excluir" data-excluir="' + escaparHTML(m.nome) + '">Excluir</button>' +
+          '</span>' +
           '</div>';
       }).join('');
     }
@@ -1067,7 +1103,7 @@
         return;
       }
       msgMinistros.style.display = 'none';
-      document.getElementById('novo-ministro-nome').value = '';
+      cancelarEdicaoMinistro();
       renderizarListaMinistros();
       modalMinistros.hidden = false;
       document.getElementById('novo-ministro-nome').focus();
@@ -1097,37 +1133,52 @@
         msgModalMinistros('erro', 'Informe o nome do ministro.');
         return;
       }
+      const editando = ministroEditando;
       const botao = this;
       botao.disabled = true;
-      botao.textContent = 'Cadastrando...';
+      botao.textContent = 'Salvando...';
+      const payload = editando
+        ? { acao: 'editar_ministro', nome_original: editando.nomeOriginal, nome: nomeMinistro, contato: contatoMinistro }
+        : { acao: 'nova_ministro', nome: nomeMinistro, contato: contatoMinistro };
       fetch(CONFIG.APPS_SCRIPT_URL, {
         method: 'POST',
         mode: 'cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ acao: 'nova_ministro', nome: nomeMinistro, contato: contatoMinistro })
+        body: JSON.stringify(payload)
       })
         .then(function (r) { return r.json(); })
         .then(function (resposta) {
           if (resposta.status === 'ok') {
-            document.getElementById('novo-ministro-nome').value = '';
-            document.getElementById('novo-ministro-contato').value = '';
+            if (editando) {
+              cancelarEdicaoMinistro();
+            } else {
+              document.getElementById('novo-ministro-nome').value = '';
+              document.getElementById('novo-ministro-contato').value = '';
+            }
             msgModalMinistros('sucesso', resposta.mensagem);
             carregarMinistros();
             setTimeout(renderizarListaMinistros, 400);
           } else {
-            msgModalMinistros('erro', 'Erro ao cadastrar: ' + (resposta.mensagem || 'resposta inválida.'));
+            msgModalMinistros('erro', 'Erro ao ' + (editando ? 'editar' : 'cadastrar') + ': ' + (resposta.mensagem || 'resposta inválida.'));
           }
         })
         .catch(function () {
-          msgModalMinistros('erro', 'Não foi possível cadastrar. Verifique sua conexão e a URL do Apps Script no config.js.');
+          msgModalMinistros('erro', 'Não foi possível salvar. Verifique sua conexão e a URL do Apps Script no config.js.');
         })
         .finally(function () {
           botao.disabled = false;
-          botao.textContent = 'Cadastrar';
+          botao.textContent = editando ? 'Salvar alterações' : 'Cadastrar';
         });
     });
 
     document.getElementById('lista-ministros').addEventListener('click', function (e) {
+      const botaoEditar = e.target.closest('[data-editar]');
+      if (botaoEditar) {
+        const nome = botaoEditar.getAttribute('data-editar');
+        const m = ministrosLista.find(function (m) { return m.nome === nome; });
+        if (m) entrarEdicaoMinistro(m);
+        return;
+      }
       const botao = e.target.closest('[data-excluir]');
       if (!botao) return;
       const nome = botao.getAttribute('data-excluir');

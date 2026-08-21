@@ -90,6 +90,9 @@ function doPost(e) {
     if (acao === 'excluir_ministro') {
       return excluirMinistro(dados);
     }
+    if (acao === 'editar_ministro') {
+      return editarMinistro(dados);
+    }
     if (acao === 'editar_transacao') {
       return editarTransacao(dados);
     }
@@ -276,6 +279,34 @@ function excluirMinistro(dados) {
   }
   folha.deleteRow(linha);
   return jsonResposta({ status: 'ok', mensagem: 'Ministro "' + nome + '" excluído com sucesso!' });
+}
+
+// Atualiza nome/contato de um ministro na aba "ministros".
+function editarMinistro(dados) {
+  var planilha = SpreadsheetApp.getActiveSpreadsheet();
+  var folha = planilha.getSheetByName(ABA_MINISTROS);
+  if (!folha) {
+    return jsonResposta({ status: 'erro', mensagem: 'Aba "ministros" não encontrada.' });
+  }
+  var nomeOriginal = String(dados.nome_original || '').trim();
+  var nome = String(dados.nome || '').trim();
+  if (!nomeOriginal || !nome) {
+    return jsonResposta({ status: 'erro', mensagem: 'Informe o nome do ministro.' });
+  }
+  var contato = String(dados.contato || '').trim();
+  var valores = folha.getDataRange().getValues();
+  var linha = -1;
+  for (var i = 0; i < valores.length; i++) {
+    if (String(valores[i][0] || '').trim().toLowerCase() === nomeOriginal.toLowerCase()) {
+      linha = i + 1;
+      break;
+    }
+  }
+  if (linha === -1) {
+    return jsonResposta({ status: 'erro', mensagem: 'Ministro "' + nomeOriginal + '" não encontrado na aba "ministros".' });
+  }
+  folha.getRange(linha, 1, 1, 2).setValues([[nome, contato]]);
+  return jsonResposta({ status: 'ok', mensagem: 'Ministro "' + nome + '" atualizado com sucesso!' });
 }
 
 function novaConta(dados) {
