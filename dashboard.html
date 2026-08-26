@@ -297,49 +297,7 @@
         }
       }
       if (campo.length > 0 || linha.length > 0) { linha.push(campo); resultado.push(linha); }
-      return resultado.filter(function (l) { return l.some(function (c) { return c.trim() !== '';       });
-
-      // Gráfico de evolução do saldo
-      const canvasSaldo = document.getElementById('grafico-saldo');
-      if (graficoSaldo) graficoSaldo.destroy();
-      graficoSaldo = new Chart(canvasSaldo.getContext('2d'), {
-        type: 'line',
-        data: {
-          labels: MESES,
-          datasets: [{
-            label: 'Saldo acumulado',
-            data: acumulado,
-            borderColor: '#1e8e3e',
-            backgroundColor: 'rgba(30, 142, 62, 0.15)',
-            fill: true,
-            tension: 0.35,
-            pointRadius: 4,
-            pointBackgroundColor: '#1e8e3e',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: function (ctx) { return 'Saldo: ' + formatarBRL(ctx.parsed.y); }
-              }
-            }
-          },
-          scales: {
-            y: {
-              ticks: {
-                callback: function (v) { return 'R$ ' + v.toLocaleString('pt-BR'); }
-              }
-            }
-          }
-        }
-      });
-    });
+      return resultado.filter(function (l) { return l.some(function (c) { return c.trim() !== ''; }); });
     }
 
     function parseValor(v) {
@@ -813,6 +771,47 @@
               grid: { drawOnChartArea: false },
               ticks: {
                 callback: function (v) { return v.toLocaleString('pt-BR'); }
+              }
+            }
+          }
+        }
+      });
+
+      // Gráfico de evolução do saldo
+      const canvasSaldo = document.getElementById('grafico-saldo');
+      if (graficoSaldo) graficoSaldo.destroy();
+      graficoSaldo = new Chart(canvasSaldo.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: MESES,
+          datasets: [{
+            label: 'Saldo acumulado',
+            data: acumulado,
+            borderColor: '#1e8e3e',
+            backgroundColor: 'rgba(30, 142, 62, 0.15)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4,
+            pointBackgroundColor: '#1e8e3e',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function (ctx) { return 'Saldo: ' + formatarBRL(ctx.parsed.y); }
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: function (v) { return 'R$ ' + v.toLocaleString('pt-BR'); }
               }
             }
           }
