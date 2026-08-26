@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MESCE - Registro de Caixa</title>
   <link rel="icon" href="https://iili.io/CQEddFI.jpg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b5394">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -40,19 +42,24 @@
             <input type="date" id="data" required>
           </div>
 
-          <div class="campo">
+          <div class="campo" id="campo-mesce">
             <label for="mesce">Mesce (nome do ministro)</label>
             <div class="campo-conta">
-              <input type="text" id="mesce" list="sugestoes-mesce" placeholder="Nome do ministro" required>
+              <input type="text" id="mesce" list="sugestoes-mesce" placeholder="Nome do ministro">
               <button type="button" class="botao botao-secundario botao-nova-conta" id="botao-ministros" title="Cadastrar ou excluir ministros">+</button>
             </div>
             <datalist id="sugestoes-mesce"></datalist>
             <p class="dica" id="dica-ministros"></p>
           </div>
 
+          <div class="campo" id="campo-descricao" hidden>
+            <label for="descricao">Descrição da retirada</label>
+            <input type="text" id="descricao" placeholder="Ex.: Compra de material, Aluguel, Energia...">
+          </div>
+
           <div class="campo">
             <label for="valor">Valor (R$)</label>
-            <input type="number" id="valor" min="0" step="0.01" placeholder="Ex.: 5,00" required>
+            <input type="text" id="valor" inputmode="decimal" placeholder="R$ 0,00">
           </div>
 
           <div class="campo">
@@ -105,6 +112,9 @@
           <button type="submit" class="botao botao-primario" id="botao-salvar">
             Salvar Movimentação
           </button>
+          <button type="button" class="botao botao-secundario" id="botao-limpar" title="Limpar todos os campos">
+            Limpar
+          </button>
           <button type="button" class="botao botao-secundario" id="botao-mensalidade" title="Preenche os campos com os dados de uma mensalidade do mês atual">
             Registrar Mensalidade
           </button>
@@ -113,6 +123,7 @@
           </button>
           <a class="botao botao-secundario" href="dashboard.html">Ver Dashboard</a>
         </div>
+        <p class="dica">Dica: pressione <kbd>Ctrl</kbd>+<kbd>Enter</kbd> para salvar rapidamente.</p>
         <p class="dica" id="dica-mensalidade-valor"></p>
 
         <p class="dica" id="dica-sugestoes">Carregando sugestões de nomes e contas...</p>
@@ -220,7 +231,7 @@
         <p class="dica" style="margin-top:0">O registro foi salvo na planilha. Deseja imprimir o recibo?</p>
         <div class="recibo-resumo">
           <div class="recibo-linha"><span>Data</span><strong id="rec-resumo-data"></strong></div>
-          <div class="recibo-linha"><span>Recebido de</span><strong id="rec-resumo-nome"></strong></div>
+          <div class="recibo-linha"><span id="rec-resumo-label-nome">Recebido de</span><strong id="rec-resumo-nome"></strong></div>
           <div class="recibo-linha"><span>Conta</span><strong id="rec-resumo-conta"></strong></div>
           <div class="recibo-linha"><span>Período</span><strong id="rec-resumo-periodo"></strong></div>
           <div class="recibo-linha"><span>Valor</span><strong id="rec-resumo-valor"></strong></div>
@@ -263,7 +274,7 @@
       <h3 class="recibo-titulo">RECIBO DE PAGAMENTO</h3>
       <table class="recibo-tabela">
         <tr><th>Data</th><td id="rec-data"></td></tr>
-        <tr><th>Recebido de</th><td id="rec-nome"></td></tr>
+        <tr><th id="rec-label-nome">Recebido de</th><td id="rec-nome"></td></tr>
         <tr><th>Conta</th><td id="rec-conta"></td></tr>
         <tr id="rec-linha-periodo"><th>Período</th><td id="rec-periodo"></td></tr>
         <tr id="rec-linha-meses" hidden><th>Meses</th><td id="rec-meses"></td></tr>
@@ -291,6 +302,21 @@
       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
     ];
 
+    function enviarDados(body) {
+      function tentar() {
+        var controller = new AbortController();
+        var timer = setTimeout(function () { controller.abort(); }, 30000);
+        return fetch(CONFIG.APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(body),
+          signal: controller.signal
+        }).finally(function () { clearTimeout(timer); });
+      }
+      return tentar().catch(function () { return tentar(); });
+    }
+
     const aviso = document.getElementById('aviso');
     const formulario = document.getElementById('formulario');
     const botaoSalvar = document.getElementById('botao-salvar');
@@ -304,6 +330,11 @@
 
     document.getElementById('data').value = hoje();
 
+    function alternarCamposTipo(tipo) {
+      document.getElementById('campo-mesce').hidden = (tipo === 'Saída');
+      document.getElementById('campo-descricao').hidden = (tipo === 'Entrada');
+    }
+
     document.querySelectorAll('.opcao-tipo').forEach(function (opcao) {
       const radio = opcao.querySelector('input');
       radio.addEventListener('change', function () {
@@ -315,6 +346,7 @@
         } else {
           opcao.classList.add('selecionada-saida');
         }
+        alternarCamposTipo(radio.value);
       });
     });
 
@@ -333,8 +365,15 @@
       return 'R$ ' + n.toFixed(2).replace('.', ',');
     }
 
+    document.getElementById('valor').addEventListener('input', function (e) {
+      let v = this.value.replace(/\D/g, '');
+      if (!v) { this.value = ''; return; }
+      v = (parseInt(v, 10) / 100).toFixed(2).replace('.', ',');
+      this.value = 'R$ ' + v;
+    });
+
     function valorParaNumero(texto) {
-      let s = String(texto).trim().replace(/[R$\s.]/g, '').replace(',', '.');
+      let s = String(texto).trim().replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.');
       return parseFloat(s);
     }
 
@@ -505,6 +544,7 @@
         if (radio) {
           radio.checked = true;
           radio.closest('.opcao-tipo').classList.add(conta.categoria === 'Entrada' ? 'selecionada-entrada' : 'selecionada-saida');
+          alternarCamposTipo(conta.categoria);
         }
       }
     }
@@ -537,6 +577,13 @@
       return resultado.filter(function (l) { return l.some(function (c) { return c.trim() !== ''; }); });
     }
 
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        formulario.requestSubmit();
+      }
+    });
+
     formulario.addEventListener('submit', function (e) {
       e.preventDefault();
 
@@ -546,17 +593,19 @@
       }
 
       const nome = document.getElementById('mesce').value.trim();
+      const descricao = document.getElementById('descricao').value.trim();
       const conta = document.getElementById('conta').value.trim();
       const valorNum = valorParaNumero(document.getElementById('valor').value);
       const tipo = document.querySelector('input[name="tipo"]:checked').value;
 
-      if (!nome) { mostrarAviso('erro', 'Informe o nome do ministro (Mesce).'); return; }
+      if (tipo === 'Entrada' && !nome) { mostrarAviso('erro', 'Para entradas, informe o nome do ministro (Mesce).'); return; }
+      if (tipo === 'Saída' && !descricao) { mostrarAviso('erro', 'Para saídas, informe a descrição da retirada.'); return; }
       if (!conta) { mostrarAviso('erro', 'Informe a conta.'); return; }
-      if (isNaN(valorNum) || valorNum < 0) { mostrarAviso('erro', 'Informe um valor válido.'); return; }
+      if (isNaN(valorNum) || valorNum <= 0) { mostrarAviso('erro', 'Informe um valor válido.'); return; }
 
       const payload = {
         data: dataParaPlanilha(document.getElementById('data').value),
-        mesce: nome,
+        mesce: tipo === 'Entrada' ? nome : descricao,
         valor: valorNum,
         periodo: document.getElementById('periodo').value,
         conta: conta,
@@ -567,19 +616,15 @@
       botaoSalvar.textContent = 'Salvando...';
       esconderAviso();
 
-      fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      })
+      enviarDados(payload)
         .then(function (r) { return r.json(); })
         .then(function (resposta) {
           if (resposta.status === 'ok') {
             mostrarAviso('sucesso', resposta.mensagem + ' ('
-              + payload.tipo + ' de ' + formatarValorBRL(valorNum) + ' - ' + nome + ')');
+              + payload.tipo + ' de ' + formatarValorBRL(valorNum) + (payload.mesce ? ' - ' + payload.mesce : '') + ')');
             formulario.reset();
             document.getElementById('data').value = hoje();
+            alternarCamposTipo('Entrada');
             mostrarRecibo(payload, valorNum);
           } else {
             mostrarAviso('erro', 'Erro ao salvar: ' + (resposta.mensagem || 'resposta inválida.'));
@@ -592,6 +637,13 @@
           botaoSalvar.disabled = false;
           botaoSalvar.textContent = 'Salvar Movimentação';
         });
+    });
+
+    document.getElementById('botao-limpar').addEventListener('click', function () {
+      formulario.reset();
+      document.getElementById('data').value = hoje();
+      alternarCamposTipo('Entrada');
+      esconderAviso();
     });
 
     carregarSugestoes();
@@ -612,6 +664,7 @@
       aplicarTipoDaConta();
       document.getElementById('periodo').value = mesAtual;
       document.getElementById('valor').value = valorMensalidade;
+      document.getElementById('valor').dispatchEvent(new Event('input'));
       document.getElementById('valor').focus();
       mostrarAviso('info', 'Mensalidade de ' + mesAtual + ' (R$ ' + formatarValorBRL(valorMensalidade) + ') pré-preenchida. Confira o valor e salve.');
     });
@@ -734,12 +787,7 @@
       const botao = this;
       botao.disabled = true;
       botao.textContent = 'Salvando...';
-      fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ acao: 'salvar_config', chave: 'valor_mensalidade', valor: novoValor })
-      })
+      enviarDados({ acao: 'salvar_config', chave: 'valor_mensalidade', valor: novoValor })
         .then(function (r) { return r.json(); })
         .then(function (resposta) {
           if (resposta.status === 'ok') {
@@ -770,23 +818,20 @@
       if (!meses.length) { msgModalRecorrente('erro', 'Escolha o mês de início e a quantidade de meses.'); return; }
       if (isNaN(total) || total <= 0) { msgModalRecorrente('erro', 'Informe o valor total pago.'); return; }
 
+      if (!confirm('Confirma salvar ' + meses.length + ' lançamento(s) de ' + formatarValorBRL(porMes) + ' por mês para "' + mesce + '"?')) return;
+
       const botao = this;
       botao.disabled = true;
       botao.textContent = 'Salvando...';
       const dataLancamento = dataParaPlanilha(document.getElementById('data').value);
-      fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          acao: 'pagamento_recorrente',
-          data: dataLancamento,
-          mesce: mesce,
-          meses: meses,
-          valor_unitario: porMes,
-          conta: 'Mensalidade',
-          tipo: 'Entrada'
-        })
+      enviarDados({
+        acao: 'pagamento_recorrente',
+        data: dataLancamento,
+        mesce: mesce,
+        meses: meses,
+        valor_unitario: porMes,
+        conta: 'Mensalidade',
+        tipo: 'Entrada'
       })
         .then(function (r) { return r.json(); })
         .then(function (resposta) {
@@ -825,9 +870,9 @@
 
     function mostrarRecibo(payload, valorNum) {
       ultimoRecibo = { payload: payload, valor: valorNum };
-      const dataExib = payload.data;
-      document.getElementById('rec-resumo-data').textContent = dataExib;
-      document.getElementById('rec-resumo-nome').textContent = payload.mesce;
+      document.getElementById('rec-resumo-label-nome').textContent = payload.tipo === 'Entrada' ? 'Recebido de' : 'Descrição';
+      document.getElementById('rec-resumo-data').textContent = payload.data;
+      document.getElementById('rec-resumo-nome').textContent = payload.mesce || '—';
       document.getElementById('rec-resumo-conta').textContent = payload.conta + (payload.tipo ? ' (' + payload.tipo + ')' : '');
       document.getElementById('rec-resumo-periodo').textContent = payload.periodo || '—';
       document.getElementById('rec-resumo-valor').textContent = formatarValorBRL(valorNum);
@@ -835,8 +880,9 @@
     }
 
     function preencherReciboImpressao(payload, valorNum) {
+      document.getElementById('rec-label-nome').textContent = payload.tipo === 'Entrada' ? 'Recebido de' : 'Descrição';
       document.getElementById('rec-data').textContent = payload.data;
-      document.getElementById('rec-nome').textContent = payload.mesce;
+      document.getElementById('rec-nome').textContent = payload.mesce || '—';
       document.getElementById('rec-conta').textContent = payload.conta + (payload.tipo ? ' (' + payload.tipo + ')' : '');
       document.getElementById('rec-linha-meses').hidden = true;
       document.getElementById('rec-linha-valor-mes').hidden = true;
@@ -1008,12 +1054,7 @@
       botao.disabled = true;
       botao.textContent = 'Salvando...';
 
-      fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ acao: 'nova_conta', nome: nomeConta, categoria: categoria })
-      })
+      enviarDados({ acao: 'nova_conta', nome: nomeConta, categoria: categoria })
         .then(function (r) { return r.json(); })
         .then(function (resposta) {
           if (resposta.status === 'ok') {
@@ -1144,12 +1185,7 @@
       const payload = editando
         ? { acao: 'editar_ministro', nome_original: editando.nomeOriginal, nome: nomeMinistro, contato: contatoMinistro }
         : { acao: 'nova_ministro', nome: nomeMinistro, contato: contatoMinistro };
-      fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      })
+      enviarDados(payload)
         .then(function (r) { return r.json(); })
         .then(function (resposta) {
           if (resposta.status === 'ok') {
@@ -1188,12 +1224,7 @@
       const nome = botao.getAttribute('data-excluir');
       if (!confirm('Excluir o ministro "' + nome + '" da aba "ministros"?')) return;
       botao.disabled = true;
-      fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ acao: 'excluir_ministro', nome: nome })
-      })
+      enviarDados({ acao: 'excluir_ministro', nome: nome })
         .then(function (r) { return r.json(); })
         .then(function (resposta) {
           if (resposta.status === 'ok') {

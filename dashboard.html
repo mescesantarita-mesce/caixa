@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MESCE - Dashboard do Caixa</title>
   <link rel="icon" href="https://iili.io/CQEddFI.jpg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b5394">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -59,7 +61,10 @@
         </div>
         <div class="campo">
           <label>&nbsp;</label>
-          <button type="button" class="botao botao-secundario" id="botao-atualizar">Atualizar dados</button>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="botao botao-secundario" id="botao-limpar-filtros">Limpar filtros</button>
+            <button type="button" class="botao botao-secundario" id="botao-atualizar">Atualizar dados</button>
+          </div>
         </div>
       </div>
       <div class="botoes-exportar" style="margin-top:12px;margin-bottom:0">
@@ -73,6 +78,13 @@
         <canvas id="grafico"></canvas>
       </div>
       <p class="dica" id="dica-grafico">Selecione um mês acima para ver os detalhes.</p>
+    </div>
+
+    <div class="cartao">
+      <h2 class="cartao-titulo">Evolução do Saldo</h2>
+      <div class="grafico-wrapper">
+        <canvas id="grafico-saldo"></canvas>
+      </div>
     </div>
 
     <div class="cartao">
@@ -127,6 +139,7 @@
             <tr>
               <th>Data</th>
               <th>Mesce</th>
+              <th>Detalhe</th>
               <th>Valor</th>
               <th>Período</th>
               <th>Conta</th>
@@ -148,13 +161,17 @@
         <label for="ed-data">Data</label>
         <input type="date" id="ed-data">
       </div>
-      <div class="campo">
+      <div class="campo" id="campo-ed-mesce">
         <label for="ed-mesce">Mesce (nome do ministro)</label>
         <input type="text" id="ed-mesce">
       </div>
+      <div class="campo" id="campo-ed-descricao" hidden>
+        <label for="ed-descricao">Descrição da retirada</label>
+        <input type="text" id="ed-descricao" placeholder="Ex.: Compra de material, Aluguel...">
+      </div>
       <div class="campo">
         <label for="ed-valor">Valor (R$)</label>
-        <input type="number" id="ed-valor" min="0" step="0.01">
+        <input type="text" id="ed-valor" inputmode="decimal" placeholder="R$ 0,00">
       </div>
       <div class="campo">
         <label for="ed-periodo">Período (mês da mensalidade)</label>
@@ -245,6 +262,7 @@
     let anoSelecionado = null;
     let mesInicializado = false;
     let grafico = null;
+    let graficoSaldo = null;
 
     const formatarBRL = function (n) {
       return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -279,7 +297,49 @@
         }
       }
       if (campo.length > 0 || linha.length > 0) { linha.push(campo); resultado.push(linha); }
-      return resultado.filter(function (l) { return l.some(function (c) { return c.trim() !== ''; }); });
+      return resultado.filter(function (l) { return l.some(function (c) { return c.trim() !== '';       });
+
+      // Gráfico de evolução do saldo
+      const canvasSaldo = document.getElementById('grafico-saldo');
+      if (graficoSaldo) graficoSaldo.destroy();
+      graficoSaldo = new Chart(canvasSaldo.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: MESES,
+          datasets: [{
+            label: 'Saldo acumulado',
+            data: acumulado,
+            borderColor: '#1e8e3e',
+            backgroundColor: 'rgba(30, 142, 62, 0.15)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4,
+            pointBackgroundColor: '#1e8e3e',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function (ctx) { return 'Saldo: ' + formatarBRL(ctx.parsed.y); }
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: function (v) { return 'R$ ' + v.toLocaleString('pt-BR'); }
+              }
+            }
+          }
+        }
+      });
+    });
     }
 
     function parseValor(v) {
@@ -958,7 +1018,7 @@
 
       if (!lista.length) {
         document.getElementById('corpo-movimentacoes').innerHTML =
-          '<tr><td colspan="7" class="vazio">Nenhuma movimentação encontrada.</td></tr>';
+          '<tr><td colspan="8" class="vazio">Nenhuma movimentação encontrada.</td></tr>';
         return;
       }
 
@@ -968,6 +1028,7 @@
         const tag = ehSaida
           ? '<span class="tag tag-saida">Saída</span>'
           : '<span class="tag tag-entrada">Entrada</span>';
+        const detalhe = ehSaida && t.mesce ? '<td class="col-detalhe" title="' + escaparHTML(t.mesce) + '">' + escaparHTML(t.mesce) + '</td>' : '<td>—</td>';
         const acoes = t._linha
           ? '<td class="acoes-celula">' +
             '<button type="button" class="botao-acao" data-editar="' + t._linha + '">Editar</button>' +
@@ -977,6 +1038,7 @@
         return '<tr>' +
           '<td>' + t.data + '</td>' +
           '<td>' + escaparHTML(t.mesce) + '</td>' +
+          detalhe +
           '<td class="' + classeValor + '">' + (ehSaida ? '- ' : '+ ') + formatarBRL(t.valor) + '</td>' +
           '<td>' + t.periodo + '</td>' +
           '<td>' + escaparHTML(t.conta) + '</td>' +
@@ -1147,6 +1209,14 @@
       window.print();
     });
     document.getElementById('botao-atualizar').addEventListener('click', function () { carregarDados(true); });
+    document.getElementById('botao-limpar-filtros').addEventListener('click', function () {
+      document.getElementById('filtro-ano').value = '';
+      document.getElementById('filtro-mes').value = '';
+      document.getElementById('filtro-conta').value = '';
+      document.getElementById('filtro-ministro').value = '';
+      document.getElementById('busca').value = '';
+      renderizar();
+    });
 
     // ===== Editar / excluir movimentações =====
     const modalEditar = document.getElementById('modal-editar');
@@ -1174,6 +1244,22 @@
         }).join('');
     }
 
+    function alternarCamposEdicao(tipo) {
+      document.getElementById('campo-ed-mesce').hidden = (tipo === 'Saída');
+      document.getElementById('campo-ed-descricao').hidden = (tipo === 'Entrada');
+    }
+
+    document.getElementById('ed-tipo').addEventListener('change', function () {
+      alternarCamposEdicao(this.value);
+    });
+
+    document.getElementById('ed-valor').addEventListener('input', function () {
+      let v = this.value.replace(/\D/g, '');
+      if (!v) { this.value = ''; return; }
+      v = (parseInt(v, 10) / 100).toFixed(2).replace('.', ',');
+      this.value = 'R$ ' + v;
+    });
+
     function abrirEdicao(linha) {
       const t = transacoes.find(function (x) { return x._linha === linha; });
       if (!t) return;
@@ -1181,10 +1267,11 @@
       preencherSelectContasEdicao();
       document.getElementById('ed-data').value = dataParaInput(t.data);
       document.getElementById('ed-mesce').value = t.mesce || '';
-      document.getElementById('ed-valor').value = t.valor || '';
+      document.getElementById('ed-valor').value = 'R$ ' + (t.valor || 0).toFixed(2).replace('.', ',');
       document.getElementById('ed-periodo').value = t.periodo || '';
       document.getElementById('ed-conta').value = t.conta || '';
       document.getElementById('ed-tipo').value = ehEntrada(t) ? 'Entrada' : 'Saída';
+      alternarCamposEdicao(ehEntrada(t) ? 'Entrada' : 'Saída');
       msgEditar.style.display = 'none';
       modalEditar.hidden = false;
       document.getElementById('ed-mesce').focus();
@@ -1230,15 +1317,18 @@
     document.getElementById('salvar-edicao').addEventListener('click', function () {
       if (!linhaEdicao) return;
       const mesce = document.getElementById('ed-mesce').value.trim();
+      const descricao = document.getElementById('ed-descricao').value.trim();
+      const tipo = document.getElementById('ed-tipo').value;
+      const nomeOuDesc = tipo === 'Entrada' ? mesce : descricao;
       const conta = document.getElementById('ed-conta').value;
       const valor = parseValor(document.getElementById('ed-valor').value);
-      const tipo = document.getElementById('ed-tipo').value;
       const data = inputParaData(document.getElementById('ed-data').value);
       const periodo = document.getElementById('ed-periodo').value;
 
-      if (!mesce) { msgEditar.className = 'aviso aviso-erro'; msgEditar.textContent = 'Informe o nome do ministro.'; msgEditar.style.display = 'block'; return; }
+      if (tipo === 'Entrada' && !nomeOuDesc) { msgEditar.className = 'aviso aviso-erro'; msgEditar.textContent = 'Informe o nome do ministro.'; msgEditar.style.display = 'block'; return; }
+      if (tipo === 'Saída' && !nomeOuDesc) { msgEditar.className = 'aviso aviso-erro'; msgEditar.textContent = 'Informe a descrição da retirada.'; msgEditar.style.display = 'block'; return; }
       if (!conta) { msgEditar.className = 'aviso aviso-erro'; msgEditar.textContent = 'Informe a conta.'; msgEditar.style.display = 'block'; return; }
-      if (isNaN(valor) || valor < 0) { msgEditar.className = 'aviso aviso-erro'; msgEditar.textContent = 'Informe um valor válido.'; msgEditar.style.display = 'block'; return; }
+      if (isNaN(valor) || valor <= 0) { msgEditar.className = 'aviso aviso-erro'; msgEditar.textContent = 'Informe um valor válido.'; msgEditar.style.display = 'block'; return; }
 
       const botao = this;
       botao.disabled = true;
@@ -1251,7 +1341,7 @@
           acao: 'editar_transacao',
           linha: linhaEdicao,
           data: data,
-          mesce: mesce,
+          mesce: nomeOuDesc,
           valor: valor,
           periodo: periodo,
           conta: conta,

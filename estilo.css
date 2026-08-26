@@ -405,6 +405,15 @@ tbody tr:nth-child(even):hover {
   font-weight: 600;
 }
 
+.col-detalhe {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--texto-suave);
+  font-style: italic;
+}
+
 .vazio {
   text-align: center;
   color: var(--texto-suave);
